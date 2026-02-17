@@ -53,7 +53,11 @@ func assertStringDB(t *testing.T, value any, expected string) {
 func TestNewDatabaseStorage(t *testing.T) {
 	db := newTestDB(t)
 	storage := newTestDatabaseStorage(t, db)
-	defer storage.Close()
+	defer func() {
+		if err := storage.Close(); err != nil {
+			t.Fatalf("expected no error on Close, got %v", err)
+		}
+	}()
 
 	if storage == nil {
 		t.Fatal("expected NewDatabaseSecondaryStorage to return a non-nil instance")
@@ -67,7 +71,11 @@ func TestNewDatabaseStorage(t *testing.T) {
 func TestDatabaseStorage_SetSuccess(t *testing.T) {
 	db := newTestDB(t)
 	storage := newTestDatabaseStorage(t, db)
-	defer storage.Close()
+	defer func() {
+		if err := storage.Close(); err != nil {
+			t.Fatalf("expected no error on Close, got %v", err)
+		}
+	}()
 
 	ctx := context.Background()
 	key := "test_key"
@@ -89,7 +97,11 @@ func TestDatabaseStorage_SetSuccess(t *testing.T) {
 func TestDatabaseStorage_SetInvalidType(t *testing.T) {
 	db := newTestDB(t)
 	storage := newTestDatabaseStorage(t, db)
-	defer storage.Close()
+	defer func() {
+		if err := storage.Close(); err != nil {
+			t.Fatalf("expected no error on Close, got %v", err)
+		}
+	}()
 
 	ctx := context.Background()
 
@@ -102,7 +114,11 @@ func TestDatabaseStorage_SetInvalidType(t *testing.T) {
 func TestDatabaseStorage_SetContextCancelled(t *testing.T) {
 	db := newTestDB(t)
 	storage := newTestDatabaseStorage(t, db)
-	defer storage.Close()
+	defer func() {
+		if err := storage.Close(); err != nil {
+			t.Fatalf("expected no error on Close, got %v", err)
+		}
+	}()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -120,13 +136,19 @@ func TestDatabaseStorage_SetContextCancelled(t *testing.T) {
 func TestDatabaseStorage_GetSuccess(t *testing.T) {
 	db := newTestDB(t)
 	storage := newTestDatabaseStorage(t, db)
-	defer storage.Close()
+	defer func() {
+		if err := storage.Close(); err != nil {
+			t.Fatalf("expected no error on Close, got %v", err)
+		}
+	}()
 
 	ctx := context.Background()
 	key := "test_key"
 	value := "test_value"
 
-	storage.Set(ctx, key, value, nil)
+	if err := storage.Set(ctx, key, value, nil); err != nil {
+		t.Fatalf("expected no error on Set, got %v", err)
+	}
 
 	retrieved, err := storage.Get(ctx, "test_key")
 	if err != nil {
@@ -139,7 +161,11 @@ func TestDatabaseStorage_GetSuccess(t *testing.T) {
 func TestDatabaseStorage_GetKeyNotFound(t *testing.T) {
 	db := newTestDB(t)
 	storage := newTestDatabaseStorage(t, db)
-	defer storage.Close()
+	defer func() {
+		if err := storage.Close(); err != nil {
+			t.Fatalf("expected no error on Close, got %v", err)
+		}
+	}()
 
 	ctx := context.Background()
 
@@ -156,7 +182,11 @@ func TestDatabaseStorage_GetKeyNotFound(t *testing.T) {
 func TestDatabaseStorage_GetContextCancelled(t *testing.T) {
 	db := newTestDB(t)
 	storage := newTestDatabaseStorage(t, db)
-	defer storage.Close()
+	defer func() {
+		if err := storage.Close(); err != nil {
+			t.Fatalf("expected no error on Close, got %v", err)
+		}
+	}()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -174,7 +204,11 @@ func TestDatabaseStorage_GetContextCancelled(t *testing.T) {
 func TestDatabaseStorage_GetExpiredEntry(t *testing.T) {
 	db := newTestDB(t)
 	storage := newTestDatabaseStorage(t, db)
-	defer storage.Close()
+	defer func() {
+		if err := storage.Close(); err != nil {
+			t.Fatalf("expected no error on Close, got %v", err)
+		}
+	}()
 
 	ctx := context.Background()
 	key := "expiring_key"
@@ -210,17 +244,22 @@ func TestDatabaseStorage_GetExpiredEntry(t *testing.T) {
 func TestDatabaseStorage_DeleteSuccess(t *testing.T) {
 	db := newTestDB(t)
 	storage := newTestDatabaseStorage(t, db)
-	defer storage.Close()
+	defer func() {
+		if err := storage.Close(); err != nil {
+			t.Fatalf("expected no error on Close, got %v", err)
+		}
+	}()
 
 	ctx := context.Background()
 	key := "test_key"
 	value := "test_value"
 
-	storage.Set(ctx, key, value, nil)
+	if err := storage.Set(ctx, key, value, nil); err != nil {
+		t.Fatalf("expected no error on Set, got %v", err)
+	}
 
-	err := storage.Delete(ctx, key)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+	if err := storage.Delete(ctx, key); err != nil {
+		t.Fatalf("expected no error on Delete, got %v", err)
 	}
 
 	retrieved, err := storage.Get(ctx, key)
@@ -235,7 +274,11 @@ func TestDatabaseStorage_DeleteSuccess(t *testing.T) {
 func TestDatabaseStorage_DeleteKeyNotFound(t *testing.T) {
 	db := newTestDB(t)
 	storage := newTestDatabaseStorage(t, db)
-	defer storage.Close()
+	defer func() {
+		if err := storage.Close(); err != nil {
+			t.Fatalf("expected no error on Close, got %v", err)
+		}
+	}()
 
 	ctx := context.Background()
 
@@ -248,7 +291,11 @@ func TestDatabaseStorage_DeleteKeyNotFound(t *testing.T) {
 func TestDatabaseStorage_DeleteContextCancelled(t *testing.T) {
 	db := newTestDB(t)
 	storage := newTestDatabaseStorage(t, db)
-	defer storage.Close()
+	defer func() {
+		if err := storage.Close(); err != nil {
+			t.Fatalf("expected no error on Close, got %v", err)
+		}
+	}()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -266,13 +313,21 @@ func TestDatabaseStorage_DeleteContextCancelled(t *testing.T) {
 func TestDatabaseStorage_Update(t *testing.T) {
 	db := newTestDB(t)
 	storage := newTestDatabaseStorage(t, db)
-	defer storage.Close()
+	defer func() {
+		if err := storage.Close(); err != nil {
+			t.Fatalf("expected no error on Close, got %v", err)
+		}
+	}()
 
 	ctx := context.Background()
 	key := "test_key"
 
-	storage.Set(ctx, key, "value1", nil)
-	storage.Set(ctx, key, "value2", nil)
+	if err := storage.Set(ctx, key, "value1", nil); err != nil {
+		t.Fatalf("failed to set key1: %v", err)
+	}
+	if err := storage.Set(ctx, key, "value2", nil); err != nil {
+		t.Fatalf("failed to set key2: %v", err)
+	}
 
 	retrieved, _ := storage.Get(ctx, key)
 	assertStringDB(t, retrieved, "value2")
@@ -281,7 +336,11 @@ func TestDatabaseStorage_Update(t *testing.T) {
 func TestDatabaseStorage_SetWithTTL(t *testing.T) {
 	db := newTestDB(t)
 	storage := newTestDatabaseStorage(t, db)
-	defer storage.Close()
+	defer func() {
+		if err := storage.Close(); err != nil {
+			t.Fatalf("expected no error on Close, got %v", err)
+		}
+	}()
 
 	ctx := context.Background()
 	key := "ttl_key"
@@ -316,7 +375,11 @@ func TestDatabaseStorage_SetWithTTL(t *testing.T) {
 func TestDatabaseStorage_MultipleKeys(t *testing.T) {
 	db := newTestDB(t)
 	storage := newTestDatabaseStorage(t, db)
-	defer storage.Close()
+	defer func() {
+		if err := storage.Close(); err != nil {
+			t.Fatalf("expected no error on Close, got %v", err)
+		}
+	}()
 
 	ctx := context.Background()
 
@@ -324,7 +387,9 @@ func TestDatabaseStorage_MultipleKeys(t *testing.T) {
 	values := []string{"value1", "value2", "value3"}
 
 	for i := range keys {
-		storage.Set(ctx, keys[i], values[i], nil)
+		if err := storage.Set(ctx, keys[i], values[i], nil); err != nil {
+			t.Fatalf("expected no error on Set, got %v", err)
+		}
 	}
 
 	for i := range keys {
@@ -351,13 +416,19 @@ func TestDatabaseStorage_ConcurrentReads(t *testing.T) {
 	}
 
 	storage := newTestDatabaseStorage(t, db)
-	defer storage.Close()
+	defer func() {
+		if err := storage.Close(); err != nil {
+			t.Fatalf("expected no error on Close, got %v", err)
+		}
+	}()
 
 	ctx = context.Background()
 	key := "concurrent_key"
 	value := "concurrent_value"
 
-	storage.Set(ctx, key, value, nil)
+	if err := storage.Set(ctx, key, value, nil); err != nil {
+		t.Fatalf("expected no error on Set, got %v", err)
+	}
 
 	numGoroutines := 50
 	results := make(chan error, numGoroutines)
@@ -388,22 +459,31 @@ func TestDatabaseStorage_ConcurrentReads(t *testing.T) {
 func TestDatabaseStorage_ConcurrentWritesAndReads(t *testing.T) {
 	db := newTestDB(t)
 	storage := newTestDatabaseStorage(t, db)
-	defer storage.Close()
+	defer func() {
+		if err := storage.Close(); err != nil {
+			t.Fatalf("expected no error on Close, got %v", err)
+		}
+	}()
 
 	ctx := context.Background()
 	numGoroutines := 50
 	done := make(chan struct{})
 
 	// Spawn writers
+	errorsCh := make(chan error, numGoroutines)
 	for i := range numGoroutines {
-		go func() {
+		go func(i int) {
 			defer func() {
 				done <- struct{}{}
 			}()
 			key := "key_" + string(rune(i))
 			value := "value_" + string(rune(i))
-			storage.Set(ctx, key, value, nil)
-		}()
+			if err := storage.Set(ctx, key, value, nil); err != nil {
+				errorsCh <- err
+			} else {
+				errorsCh <- nil
+			}
+		}(i)
 	}
 
 	// Spawn readers
@@ -425,7 +505,11 @@ func TestDatabaseStorage_ConcurrentWritesAndReads(t *testing.T) {
 func TestDatabaseStorage_ConcurrentDeletes(t *testing.T) {
 	db := newTestDB(t)
 	storage := newTestDatabaseStorage(t, db)
-	defer storage.Close()
+	defer func() {
+		if err := storage.Close(); err != nil {
+			t.Fatalf("expected no error on Close, got %v", err)
+		}
+	}()
 
 	ctx := context.Background()
 	numGoroutines := 5
@@ -433,13 +517,17 @@ func TestDatabaseStorage_ConcurrentDeletes(t *testing.T) {
 	// Create keys to delete
 	for i := range numGoroutines {
 		key := "delete_key_" + strconv.Itoa(i)
-		storage.Set(ctx, key, "value", nil)
+		if err := storage.Set(ctx, key, "value", nil); err != nil {
+			t.Fatalf("expected no error on Set, got %v", err)
+		}
 	}
 
 	// Delete keys sequentially
 	for i := range numGoroutines {
 		key := "delete_key_" + strconv.Itoa(i)
-		storage.Delete(ctx, key)
+		if err := storage.Delete(ctx, key); err != nil {
+			t.Fatalf("expected no error on Delete, got %v", err)
+		}
 	}
 
 	// Verify all keys are deleted
@@ -462,9 +550,14 @@ func TestDatabaseStorage_CleanupExpiredEntries(t *testing.T) {
 		cleanupInterval: 50 * time.Millisecond,
 		stopCleanup:     make(chan struct{}),
 		done:            make(chan struct{}),
+		cleanupStarted:  true,
 	}
 	go storage.cleanupExpiredEntries()
-	defer storage.Close()
+	defer func() {
+		if err := storage.Close(); err != nil {
+			t.Fatalf("expected no error on Close, got %v", err)
+		}
+	}()
 
 	ctx := context.Background()
 
@@ -473,7 +566,9 @@ func TestDatabaseStorage_CleanupExpiredEntries(t *testing.T) {
 	for i := range 10 {
 		key := "cleanup_key_" + string(rune(i))
 		value := "cleanup_value_" + string(rune(i))
-		storage.Set(ctx, key, value, &ttl)
+		if err := storage.Set(ctx, key, value, &ttl); err != nil {
+			t.Fatalf("expected no error on Set, got %v", err)
+		}
 	}
 
 	// Verify entries exist
@@ -609,8 +704,12 @@ func TestDatabaseStorage_PersistenceAcrossInstances(t *testing.T) {
 
 	// Create first storage instance and set values
 	storage1 := newTestDatabaseStorage(t, db)
-	storage1.Set(ctx, "key1", "value1", nil)
-	storage1.Set(ctx, "key2", "value2", nil)
+	if err := storage1.Set(ctx, "key1", "value1", nil); err != nil {
+		t.Fatalf("failed to set key1: %v", err)
+	}
+	if err := storage1.Set(ctx, "key2", "value2", nil); err != nil {
+		t.Fatalf("failed to set key2: %v", err)
+	}
 	storage1.Close()
 
 	// Create second storage instance and verify values persist

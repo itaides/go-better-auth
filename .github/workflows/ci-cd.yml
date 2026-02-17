@@ -77,11 +77,11 @@ jobs:
           go-version: "1.26.0"
           cache: true
 
-      - name: Install linter
+      - name: Install golangci-lint
         run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
-      - name: Run linter
-        run: make lint
+      - name: Lint
+        run: golangci-lint run --timeout=5m
 
   format:
     name: Format Check

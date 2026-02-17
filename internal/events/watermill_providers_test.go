@@ -20,7 +20,11 @@ func TestInitWatermillProvider_GoChannel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to initialize gochannel provider: %v", err)
 	}
-	defer pubsub.Close()
+	defer func() {
+		if err := pubsub.Close(); err != nil {
+			t.Errorf("failed to close pubsub: %v", err)
+		}
+	}()
 
 	if pubsub == nil {
 		t.Fatal("expected pubsub to be non-nil")
@@ -39,7 +43,11 @@ func TestInitWatermillProvider_GoChannel_DefaultBufferSize(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to initialize gochannel provider with default buffer: %v", err)
 	}
-	defer pubsub.Close()
+	defer func() {
+		if err := pubsub.Close(); err != nil {
+			t.Errorf("failed to close pubsub: %v", err)
+		}
+	}()
 
 	if pubsub == nil {
 		t.Fatal("expected pubsub to be non-nil")
@@ -58,7 +66,11 @@ func TestInitWatermillProvider_GoChannel_NilConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to initialize gochannel provider with nil config: %v", err)
 	}
-	defer pubsub.Close()
+	defer func() {
+		if err := pubsub.Close(); err != nil {
+			t.Errorf("failed to close pubsub: %v", err)
+		}
+	}()
 
 	if pubsub == nil {
 		t.Fatal("expected pubsub to be non-nil")
@@ -202,11 +214,21 @@ func TestInitWatermillProvider_SQLite_DefaultPath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to initialize sqlite provider with default path: %v", err)
 	}
-	defer pubsub.Close()
 	defer func() {
-		os.Remove("events.db")
-		os.Remove("events.db-shm")
-		os.Remove("events.db-wal")
+		if err := pubsub.Close(); err != nil {
+			t.Errorf("failed to close pubsub: %v", err)
+		}
+	}()
+	defer func() {
+		if err := os.Remove("events.db"); err != nil && !os.IsNotExist(err) {
+			t.Errorf("failed to remove events.db: %v", err)
+		}
+		if err := os.Remove("events.db-shm"); err != nil && !os.IsNotExist(err) {
+			t.Errorf("failed to remove events.db-shm: %v", err)
+		}
+		if err := os.Remove("events.db-wal"); err != nil && !os.IsNotExist(err) {
+			t.Errorf("failed to remove events.db-wal: %v", err)
+		}
 	}()
 
 	if pubsub == nil {
@@ -226,11 +248,21 @@ func TestInitWatermillProvider_SQLite_EmptyPath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to initialize sqlite provider with empty path: %v", err)
 	}
-	defer pubsub.Close()
 	defer func() {
-		os.Remove("events.db")
-		os.Remove("events.db-shm")
-		os.Remove("events.db-wal")
+		if err := pubsub.Close(); err != nil {
+			t.Errorf("failed to close pubsub: %v", err)
+		}
+	}()
+	defer func() {
+		if err := os.Remove("events.db"); err != nil && !os.IsNotExist(err) {
+			t.Errorf("failed to remove events.db: %v", err)
+		}
+		if err := os.Remove("events.db-shm"); err != nil && !os.IsNotExist(err) {
+			t.Errorf("failed to remove events.db-shm: %v", err)
+		}
+		if err := os.Remove("events.db-wal"); err != nil && !os.IsNotExist(err) {
+			t.Errorf("failed to remove events.db-wal: %v", err)
+		}
 	}()
 
 	if pubsub == nil {
@@ -250,11 +282,21 @@ func TestInitWatermillProvider_SQLite_CustomPath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to initialize sqlite provider with custom path: %v", err)
 	}
-	defer pubsub.Close()
 	defer func() {
-		os.Remove("/tmp/test_events.db")
-		os.Remove("/tmp/test_events.db-shm")
-		os.Remove("/tmp/test_events.db-wal")
+		if err := pubsub.Close(); err != nil {
+			t.Errorf("failed to close pubsub: %v", err)
+		}
+	}()
+	defer func() {
+		if err := os.Remove("/tmp/test_events.db"); err != nil && !os.IsNotExist(err) {
+			t.Errorf("failed to remove /tmp/test_events.db: %v", err)
+		}
+		if err := os.Remove("/tmp/test_events.db-shm"); err != nil && !os.IsNotExist(err) {
+			t.Errorf("failed to remove /tmp/test_events.db-shm: %v", err)
+		}
+		if err := os.Remove("/tmp/test_events.db-wal"); err != nil && !os.IsNotExist(err) {
+			t.Errorf("failed to remove /tmp/test_events.db-wal: %v", err)
+		}
 	}()
 
 	if pubsub == nil {

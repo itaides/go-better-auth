@@ -593,10 +593,10 @@ func TestDynamicPathWithBasePathDebug(t *testing.T) {
 // testLogger is a simple logger implementation for tests
 type testLogger struct{}
 
-func (l *testLogger) Debug(msg string, args ...interface{}) {}
-func (l *testLogger) Info(msg string, args ...interface{})  {}
-func (l *testLogger) Warn(msg string, args ...interface{})  {}
-func (l *testLogger) Error(msg string, args ...interface{}) {}
+func (l *testLogger) Debug(msg string, args ...any) {}
+func (l *testLogger) Info(msg string, args ...any)  {}
+func (l *testLogger) Warn(msg string, args ...any)  {}
+func (l *testLogger) Error(msg string, args ...any) {}
 
 // TestDoubleBasePathApplication tests that basePath is not applied twice
 func TestDoubleBasePathApplication(t *testing.T) {
@@ -682,7 +682,7 @@ func TestRouteGroupMetadata(t *testing.T) {
 	metadataPluginsAny := router.routeMetadata["GET:/test/metadata"]["plugins"]
 	metadataPlugins := metadataPluginsAny.([]string)
 
-	if !(slices.Contains(metadataPlugins, "session.auth") && slices.Contains(metadataPlugins, "bearer.auth")) {
+	if !slices.Contains(metadataPlugins, "session.auth") || !slices.Contains(metadataPlugins, "bearer.auth") {
 		t.Errorf("expected session.auth and bearer.auth in plugins, got %s", metadataPlugins)
 	}
 }

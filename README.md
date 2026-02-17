@@ -172,11 +172,6 @@ docker run -itd -p 8080:8080 \
 
 Use it from any language or framework over HTTP.
 
-Perfect for:
-
-- microservices
-- polyglot stacks
-
 ---
 
 ### 🧠 Design Principles
@@ -189,19 +184,6 @@ Perfect for:
 - Framework agnostic
 - Self-hosted
 - Extensible
-
----
-
-### 🚀 Roadmap
-
-- Many more plugins including Admin, Organizations, RBAC, MFA...
-- And more to be announced!
-
----
-
-### 📜 License
-
-Apache 2.0 License
 
 ---
 
