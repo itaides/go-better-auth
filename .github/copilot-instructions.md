@@ -37,3 +37,13 @@
 - Use inline code comments to explain non-obvious parts of the code.
 - When updating a feature, ensure that any related documentation is also updated to reflect the changes.
 - Create all docs in markdown format and within a top level docs/ directory.
+
+### Security Guidelines
+
+- Follow best practices for secure coding to prevent vulnerabilities.
+- Regularly review and update dependencies to address security issues.
+- Make sure to always follow defensive programming practices to prevent potential security breaches.
+- Use secure libraries and frameworks that are well-maintained and widely used in the community.
+- Implement proper authentication and authorization mechanisms to protect sensitive data and resources.
+- Take into account the principle of least privilege when designing access controls.
+- Always take into consideration edge cases and loopholes that could be exploited by attackers and implement safeguards against them.
