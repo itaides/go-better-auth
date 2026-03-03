@@ -5,7 +5,7 @@ This guide shows how to use go-better-auth with [Fiber](https://gofiber.io/), a 
 ## Quick Start
 
 ```bash
-go get github.com/GoBetterAuth/go-better-auth/v2/adapters/fiber
+go get github.com/GoBetterAuth/go-better-auth/v2
 ```
 
 ```go

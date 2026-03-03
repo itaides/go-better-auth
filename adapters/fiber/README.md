@@ -11,7 +11,7 @@ This adapter manually builds `net/http` requests from Fiber's context, ensuring 
 ## Installation
 
 ```bash
-go get github.com/GoBetterAuth/go-better-auth/v2/adapters/fiber
+go get github.com/GoBetterAuth/go-better-auth/v2
 ```
 
 ## Usage
