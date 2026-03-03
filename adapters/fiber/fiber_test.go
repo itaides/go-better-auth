@@ -44,7 +44,7 @@ func (h *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if h.response != "" {
-		w.Write([]byte(h.response))
+		_, _ = w.Write([]byte(h.response))
 	}
 }
 
@@ -117,7 +117,7 @@ func TestMultiValueSetCookieHeaders(t *testing.T) {
 		w.Header().Add("Set-Cookie", "session=abc; Path=/; HttpOnly")
 		w.Header().Add("Set-Cookie", "csrf=xyz; Path=/")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"ok":true}`))
+		_, _ = w.Write([]byte(`{"ok":true}`))
 	})
 
 	app := gofiber.New()
@@ -138,7 +138,7 @@ func TestMultiValueSetCookieHeaders(t *testing.T) {
 func TestResponseStatusCodeForwarded(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(`{"error":"unauthorized"}`))
+		_, _ = w.Write([]byte(`{"error":"unauthorized"}`))
 	})
 
 	app := gofiber.New()
@@ -155,7 +155,7 @@ func TestResponseStatusCodeForwarded(t *testing.T) {
 
 func TestDefaultStatusOK(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{"ok":true}`))
+		_, _ = w.Write([]byte(`{"ok":true}`))
 	})
 
 	app := gofiber.New()
@@ -175,7 +175,7 @@ func TestWriteHeaderIdempotent(t *testing.T) {
 		// Second call should be ignored
 		w.Header().Set("X-Second", "two")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"ok":true}`))
+		_, _ = w.Write([]byte(`{"ok":true}`))
 	})
 
 	app := gofiber.New()
