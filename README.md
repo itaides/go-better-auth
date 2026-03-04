@@ -239,4 +239,6 @@ If you'd like to support the ongoing development of this project, consider subsc
 
 #### 🥉 Bronze Sponsors
 
+<a href="https://github.com/libanj"><img src="https://wsrv.nl/?url=github.com/libanj.png?w=64&h=64&mask=circle" width="32" height="32"></a>
+
 ---
