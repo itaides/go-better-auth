@@ -3,21 +3,21 @@ package usecases
 import (
 	"context"
 
-	twofactor "github.com/GoBetterAuth/go-better-auth/v2/plugins/two-factor"
 	"github.com/GoBetterAuth/go-better-auth/v2/plugins/two-factor/constants"
+	"github.com/GoBetterAuth/go-better-auth/v2/plugins/two-factor/repository"
 	rootservices "github.com/GoBetterAuth/go-better-auth/v2/services"
 )
 
 type disableUseCase struct {
 	AccountService  rootservices.AccountService
 	PasswordService rootservices.PasswordService
-	Repo            *twofactor.TwoFactorRepository
+	Repo            *repository.TwoFactorRepository
 }
 
 func NewDisableUseCase(
 	accountService rootservices.AccountService,
 	passwordService rootservices.PasswordService,
-	repo *twofactor.TwoFactorRepository,
+	repo *repository.TwoFactorRepository,
 ) DisableUseCase {
 	return &disableUseCase{
 		AccountService:  accountService,
