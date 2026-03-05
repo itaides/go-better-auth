@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/GoBetterAuth/go-better-auth/v2/models"
-	twofactor "github.com/GoBetterAuth/go-better-auth/v2/plugins/two-factor"
 	"github.com/GoBetterAuth/go-better-auth/v2/plugins/two-factor/constants"
+	"github.com/GoBetterAuth/go-better-auth/v2/plugins/two-factor/repository"
 	"github.com/GoBetterAuth/go-better-auth/v2/plugins/two-factor/services"
 	"github.com/GoBetterAuth/go-better-auth/v2/plugins/two-factor/types"
 	rootservices "github.com/GoBetterAuth/go-better-auth/v2/services"
@@ -18,7 +18,7 @@ type verifyBackupCodeUseCase struct {
 	SessionService    rootservices.SessionService
 	UserService       rootservices.UserService
 	BackupCodeService *services.BackupCodeService
-	Repo              *twofactor.TwoFactorRepository
+	Repo              *repository.TwoFactorRepository
 	GlobalConfig      *models.Config
 	Config            *types.TwoFactorPluginConfig
 }
@@ -28,7 +28,7 @@ func NewVerifyBackupCodeUseCase(
 	sessionService rootservices.SessionService,
 	userService rootservices.UserService,
 	backupCodeService *services.BackupCodeService,
-	repo *twofactor.TwoFactorRepository,
+	repo *repository.TwoFactorRepository,
 	globalConfig *models.Config,
 	config *types.TwoFactorPluginConfig,
 ) VerifyBackupCodeUseCase {
