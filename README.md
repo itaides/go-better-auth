@@ -73,6 +73,7 @@ This design empowers you to build secure, maintainable, and highly customizable 
 GoBetterAuth comes with a variety of plugins that provide essential authentication features out of the box:
 
 - 📧 Email & Password: Authentication, Email Verification & Password Reset
+- 🔐 Two-Factor Authentication (TOTP): Authenticator app support, backup codes, trusted devices
 - 🌐 OAuth providers
 - 💾 Multiple database backends
 - 🗄️ Secondary storage (Redis, memory, DB)
