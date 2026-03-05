@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
-	twofactor "github.com/GoBetterAuth/go-better-auth/v2/plugins/two-factor"
 	"github.com/GoBetterAuth/go-better-auth/v2/plugins/two-factor/constants"
+	"github.com/GoBetterAuth/go-better-auth/v2/plugins/two-factor/repository"
 	"github.com/GoBetterAuth/go-better-auth/v2/plugins/two-factor/services"
 	"github.com/GoBetterAuth/go-better-auth/v2/plugins/two-factor/types"
 	rootservices "github.com/GoBetterAuth/go-better-auth/v2/services"
@@ -17,7 +17,7 @@ type enableUseCase struct {
 	TokenService      rootservices.TokenService
 	TOTPService       *services.TOTPService
 	BackupCodeService *services.BackupCodeService
-	Repo              *twofactor.TwoFactorRepository
+	Repo              *repository.TwoFactorRepository
 	Config            *types.TwoFactorPluginConfig
 }
 
@@ -27,7 +27,7 @@ func NewEnableUseCase(
 	tokenService rootservices.TokenService,
 	totpService *services.TOTPService,
 	backupCodeService *services.BackupCodeService,
-	repo *twofactor.TwoFactorRepository,
+	repo *repository.TwoFactorRepository,
 	config *types.TwoFactorPluginConfig,
 ) EnableUseCase {
 	return &enableUseCase{

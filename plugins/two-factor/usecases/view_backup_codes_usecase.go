@@ -4,19 +4,19 @@ import (
 	"context"
 	"encoding/json"
 
-	twofactor "github.com/GoBetterAuth/go-better-auth/v2/plugins/two-factor"
 	"github.com/GoBetterAuth/go-better-auth/v2/plugins/two-factor/constants"
+	"github.com/GoBetterAuth/go-better-auth/v2/plugins/two-factor/repository"
 	rootservices "github.com/GoBetterAuth/go-better-auth/v2/services"
 )
 
 type viewBackupCodesUseCase struct {
 	TokenService rootservices.TokenService
-	Repo         *twofactor.TwoFactorRepository
+	Repo         *repository.TwoFactorRepository
 }
 
 func NewViewBackupCodesUseCase(
 	tokenService rootservices.TokenService,
-	repo *twofactor.TwoFactorRepository,
+	repo *repository.TwoFactorRepository,
 ) ViewBackupCodesUseCase {
 	return &viewBackupCodesUseCase{
 		TokenService: tokenService,

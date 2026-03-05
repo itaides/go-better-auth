@@ -1,4 +1,4 @@
-package twofactor
+package repository
 
 import (
 	"context"
