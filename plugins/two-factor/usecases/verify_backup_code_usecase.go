@@ -15,21 +15,23 @@ import (
 )
 
 type verifyBackupCodeUseCase struct {
-	TokenService      rootservices.TokenService
-	SessionService    rootservices.SessionService
-	UserService       rootservices.UserService
-	BackupCodeService *services.BackupCodeService
-	Repo              *repository.TwoFactorRepository
-	GlobalConfig      *models.Config
-	Config            *types.TwoFactorPluginConfig
-	EventBus          models.EventBus
-	Logger            models.Logger
+	TokenService        rootservices.TokenService
+	SessionService      rootservices.SessionService
+	UserService         rootservices.UserService
+	VerificationService rootservices.VerificationService
+	BackupCodeService   *services.BackupCodeService
+	Repo                *repository.TwoFactorRepository
+	GlobalConfig        *models.Config
+	Config              *types.TwoFactorPluginConfig
+	EventBus            models.EventBus
+	Logger              models.Logger
 }
 
 func NewVerifyBackupCodeUseCase(
 	tokenService rootservices.TokenService,
 	sessionService rootservices.SessionService,
 	userService rootservices.UserService,
+	verificationService rootservices.VerificationService,
 	backupCodeService *services.BackupCodeService,
 	repo *repository.TwoFactorRepository,
 	globalConfig *models.Config,
@@ -38,19 +40,26 @@ func NewVerifyBackupCodeUseCase(
 	logger models.Logger,
 ) VerifyBackupCodeUseCase {
 	return &verifyBackupCodeUseCase{
-		TokenService:      tokenService,
-		SessionService:    sessionService,
-		UserService:       userService,
-		BackupCodeService: backupCodeService,
-		Repo:              repo,
-		GlobalConfig:      globalConfig,
-		Config:            config,
-		EventBus:          eventBus,
-		Logger:            logger,
+		TokenService:        tokenService,
+		SessionService:      sessionService,
+		UserService:         userService,
+		VerificationService: verificationService,
+		BackupCodeService:   backupCodeService,
+		Repo:                repo,
+		GlobalConfig:        globalConfig,
+		Config:              config,
+		EventBus:            eventBus,
+		Logger:              logger,
 	}
 }
 
-func (uc *verifyBackupCodeUseCase) Verify(ctx context.Context, userID, code string, trustDevice bool, ipAddress, userAgent *string) (*types.VerifyResult, error) {
+func (uc *verifyBackupCodeUseCase) Verify(ctx context.Context, pendingToken, code string, trustDevice bool, ipAddress, userAgent *string) (*types.VerifyResult, error) {
+	// Resolve userID from pending token
+	userID, verificationID, err := uc.resolvePendingToken(ctx, pendingToken)
+	if err != nil {
+		return nil, err
+	}
+
 	// Get two-factor record
 	record, err := uc.Repo.GetByUserID(ctx, userID)
 	if err != nil {
@@ -111,10 +120,14 @@ func (uc *verifyBackupCodeUseCase) Verify(ctx context.Context, userID, code stri
 		return nil, err
 	}
 
+	// Delete the pending verification
+	_ = uc.VerificationService.Delete(ctx, verificationID)
+
 	result := &types.VerifyResult{
-		User:         user,
-		Session:      session,
-		SessionToken: token,
+		User:                  user,
+		Session:               session,
+		SessionToken:          token,
+		TrustedDeviceDuration: uc.Config.TrustedDeviceDuration,
 	}
 
 	// Optionally trust device
@@ -133,6 +146,26 @@ func (uc *verifyBackupCodeUseCase) Verify(ctx context.Context, userID, code stri
 	uc.publishEvent(constants.EventTwoFactorBackupUsed, userID)
 
 	return result, nil
+}
+
+// resolvePendingToken hashes the raw token, looks up the verification record,
+// checks expiry, and returns the userID and verification ID.
+func (uc *verifyBackupCodeUseCase) resolvePendingToken(ctx context.Context, rawToken string) (userID, verificationID string, err error) {
+	hashedToken := uc.TokenService.Hash(rawToken)
+	verification, err := uc.VerificationService.GetByToken(ctx, hashedToken)
+	if err != nil {
+		return "", "", constants.ErrInvalidPendingToken
+	}
+	if verification == nil || verification.UserID == nil {
+		return "", "", constants.ErrInvalidPendingToken
+	}
+	if verification.Type != models.TypeTwoFactorPendingAuth {
+		return "", "", constants.ErrInvalidPendingToken
+	}
+	if verification.ExpiresAt.Before(time.Now().UTC()) {
+		return "", "", constants.ErrInvalidPendingToken
+	}
+	return *verification.UserID, verification.ID, nil
 }
 
 func (uc *verifyBackupCodeUseCase) publishEvent(eventType, userID string) {

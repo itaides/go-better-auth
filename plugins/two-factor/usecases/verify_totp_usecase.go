@@ -15,21 +15,23 @@ import (
 )
 
 type verifyTOTPUseCase struct {
-	TokenService   rootservices.TokenService
-	SessionService rootservices.SessionService
-	UserService    rootservices.UserService
-	TOTPService    *services.TOTPService
-	Repo           *repository.TwoFactorRepository
-	GlobalConfig   *models.Config
-	Config         *types.TwoFactorPluginConfig
-	EventBus       models.EventBus
-	Logger         models.Logger
+	TokenService        rootservices.TokenService
+	SessionService      rootservices.SessionService
+	UserService         rootservices.UserService
+	VerificationService rootservices.VerificationService
+	TOTPService         *services.TOTPService
+	Repo                *repository.TwoFactorRepository
+	GlobalConfig        *models.Config
+	Config              *types.TwoFactorPluginConfig
+	EventBus            models.EventBus
+	Logger              models.Logger
 }
 
 func NewVerifyTOTPUseCase(
 	tokenService rootservices.TokenService,
 	sessionService rootservices.SessionService,
 	userService rootservices.UserService,
+	verificationService rootservices.VerificationService,
 	totpService *services.TOTPService,
 	repo *repository.TwoFactorRepository,
 	globalConfig *models.Config,
@@ -38,19 +40,26 @@ func NewVerifyTOTPUseCase(
 	logger models.Logger,
 ) VerifyTOTPUseCase {
 	return &verifyTOTPUseCase{
-		TokenService:   tokenService,
-		SessionService: sessionService,
-		UserService:    userService,
-		TOTPService:    totpService,
-		Repo:           repo,
-		GlobalConfig:   globalConfig,
-		Config:         config,
-		EventBus:       eventBus,
-		Logger:         logger,
+		TokenService:        tokenService,
+		SessionService:      sessionService,
+		UserService:         userService,
+		VerificationService: verificationService,
+		TOTPService:         totpService,
+		Repo:                repo,
+		GlobalConfig:        globalConfig,
+		Config:              config,
+		EventBus:            eventBus,
+		Logger:              logger,
 	}
 }
 
-func (uc *verifyTOTPUseCase) Verify(ctx context.Context, userID, code string, trustDevice bool, ipAddress, userAgent *string) (*types.VerifyResult, error) {
+func (uc *verifyTOTPUseCase) Verify(ctx context.Context, pendingToken, code string, trustDevice bool, ipAddress, userAgent *string) (*types.VerifyResult, error) {
+	// Resolve userID from pending token
+	userID, verificationID, err := uc.resolvePendingToken(ctx, pendingToken)
+	if err != nil {
+		return nil, err
+	}
+
 	// Get two-factor record
 	record, err := uc.Repo.GetByUserID(ctx, userID)
 	if err != nil {
@@ -67,26 +76,25 @@ func (uc *verifyTOTPUseCase) Verify(ctx context.Context, userID, code string, tr
 	}
 
 	// Validate TOTP code
-	if !uc.TOTPService.ValidateCode(secret, code, time.Now()) {
+	if !uc.TOTPService.ValidateCode(secret, code, time.Now().UTC()) {
 		return nil, constants.ErrInvalidTOTPCode
 	}
 
 	// If this is the first successful verification (SkipVerificationOnEnable was false),
-	// enable 2FA on the user
+	// enable 2FA on the two_factor record
+	if !record.Enabled {
+		if err := uc.Repo.SetEnabled(ctx, userID, true); err != nil {
+			return nil, err
+		}
+	}
+
+	// Get user
 	user, err := uc.UserService.GetByID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 	if user == nil {
 		return nil, constants.ErrUserNotFound
-	}
-
-	if user.TwoFactorEnabled == nil || !*user.TwoFactorEnabled {
-		if err := uc.Repo.SetUserTwoFactorEnabled(ctx, userID, true); err != nil {
-			return nil, err
-		}
-		enabled := true
-		user.TwoFactorEnabled = &enabled
 	}
 
 	// Create session
@@ -101,10 +109,14 @@ func (uc *verifyTOTPUseCase) Verify(ctx context.Context, userID, code string, tr
 		return nil, err
 	}
 
+	// Delete the pending verification
+	_ = uc.VerificationService.Delete(ctx, verificationID)
+
 	result := &types.VerifyResult{
-		User:         user,
-		Session:      session,
-		SessionToken: token,
+		User:                  user,
+		Session:               session,
+		SessionToken:          token,
+		TrustedDeviceDuration: uc.Config.TrustedDeviceDuration,
 	}
 
 	// Optionally trust device
@@ -123,6 +135,26 @@ func (uc *verifyTOTPUseCase) Verify(ctx context.Context, userID, code string, tr
 	uc.publishEvent(constants.EventTwoFactorVerified, userID)
 
 	return result, nil
+}
+
+// resolvePendingToken hashes the raw token, looks up the verification record,
+// checks expiry, and returns the userID and verification ID.
+func (uc *verifyTOTPUseCase) resolvePendingToken(ctx context.Context, rawToken string) (userID, verificationID string, err error) {
+	hashedToken := uc.TokenService.Hash(rawToken)
+	verification, err := uc.VerificationService.GetByToken(ctx, hashedToken)
+	if err != nil {
+		return "", "", constants.ErrInvalidPendingToken
+	}
+	if verification == nil || verification.UserID == nil {
+		return "", "", constants.ErrInvalidPendingToken
+	}
+	if verification.Type != models.TypeTwoFactorPendingAuth {
+		return "", "", constants.ErrInvalidPendingToken
+	}
+	if verification.ExpiresAt.Before(time.Now().UTC()) {
+		return "", "", constants.ErrInvalidPendingToken
+	}
+	return *verification.UserID, verification.ID, nil
 }
 
 func (uc *verifyTOTPUseCase) publishEvent(eventType, userID string) {

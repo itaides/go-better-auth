@@ -11,6 +11,7 @@ import (
 )
 
 type getTOTPURIUseCase struct {
+	UserService     rootservices.UserService
 	AccountService  rootservices.AccountService
 	PasswordService rootservices.PasswordService
 	TokenService    rootservices.TokenService
@@ -20,6 +21,7 @@ type getTOTPURIUseCase struct {
 }
 
 func NewGetTOTPURIUseCase(
+	userService rootservices.UserService,
 	accountService rootservices.AccountService,
 	passwordService rootservices.PasswordService,
 	tokenService rootservices.TokenService,
@@ -28,6 +30,7 @@ func NewGetTOTPURIUseCase(
 	config *types.TwoFactorPluginConfig,
 ) GetTOTPURIUseCase {
 	return &getTOTPURIUseCase{
+		UserService:     userService,
 		AccountService:  accountService,
 		PasswordService: passwordService,
 		TokenService:    tokenService,
@@ -37,7 +40,7 @@ func NewGetTOTPURIUseCase(
 	}
 }
 
-func (uc *getTOTPURIUseCase) GetTOTPURI(ctx context.Context, userID, password, email string) (string, error) {
+func (uc *getTOTPURIUseCase) GetTOTPURI(ctx context.Context, userID, password string) (string, error) {
 	// Verify password
 	if err := verifyPassword(ctx, uc.AccountService, uc.PasswordService, userID, password); err != nil {
 		return "", err
@@ -52,6 +55,15 @@ func (uc *getTOTPURIUseCase) GetTOTPURI(ctx context.Context, userID, password, e
 		return "", constants.ErrTwoFactorNotEnabled
 	}
 
+	// Fetch user to get email
+	user, err := uc.UserService.GetByID(ctx, userID)
+	if err != nil {
+		return "", err
+	}
+	if user == nil {
+		return "", constants.ErrUserNotFound
+	}
+
 	// Decrypt secret
 	secret, err := uc.TokenService.Decrypt(record.Secret)
 	if err != nil {
@@ -60,5 +72,5 @@ func (uc *getTOTPURIUseCase) GetTOTPURI(ctx context.Context, userID, password, e
 
 	// Build URI
 	issuer := uc.Config.Issuer
-	return uc.TOTPService.BuildURI(secret, issuer, email), nil
+	return uc.TOTPService.BuildURI(secret, issuer, user.Email), nil
 }

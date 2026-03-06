@@ -21,6 +21,7 @@ func (a *API) UseCases() *usecases.UseCases {
 func BuildUseCases(p *TwoFactorPlugin) *usecases.UseCases {
 	return &usecases.UseCases{
 		Enable: usecases.NewEnableUseCase(
+			p.userService,
 			p.accountService,
 			p.passwordService,
 			p.tokenService,
@@ -39,6 +40,7 @@ func BuildUseCases(p *TwoFactorPlugin) *usecases.UseCases {
 			p.logger,
 		),
 		GetTOTPURI: usecases.NewGetTOTPURIUseCase(
+			p.userService,
 			p.accountService,
 			p.passwordService,
 			p.tokenService,
@@ -50,6 +52,7 @@ func BuildUseCases(p *TwoFactorPlugin) *usecases.UseCases {
 			p.tokenService,
 			p.sessionService,
 			p.userService,
+			p.verificationService,
 			p.totpService,
 			p.repo,
 			p.globalConfig,
@@ -68,6 +71,7 @@ func BuildUseCases(p *TwoFactorPlugin) *usecases.UseCases {
 			p.tokenService,
 			p.sessionService,
 			p.userService,
+			p.verificationService,
 			p.backupCodeService,
 			p.repo,
 			p.globalConfig,

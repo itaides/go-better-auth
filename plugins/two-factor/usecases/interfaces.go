@@ -17,7 +17,7 @@ type UseCases struct {
 }
 
 type EnableUseCase interface {
-	Enable(ctx context.Context, userID, password, issuer, email string) (*types.EnableResult, error)
+	Enable(ctx context.Context, userID, password, issuer string) (*types.EnableResult, error)
 }
 
 type DisableUseCase interface {
@@ -25,11 +25,11 @@ type DisableUseCase interface {
 }
 
 type GetTOTPURIUseCase interface {
-	GetTOTPURI(ctx context.Context, userID, password, email string) (string, error)
+	GetTOTPURI(ctx context.Context, userID, password string) (string, error)
 }
 
 type VerifyTOTPUseCase interface {
-	Verify(ctx context.Context, userID, code string, trustDevice bool, ipAddress, userAgent *string) (*types.VerifyResult, error)
+	Verify(ctx context.Context, pendingToken, code string, trustDevice bool, ipAddress, userAgent *string) (*types.VerifyResult, error)
 }
 
 type GenerateBackupCodesUseCase interface {
@@ -37,7 +37,7 @@ type GenerateBackupCodesUseCase interface {
 }
 
 type VerifyBackupCodeUseCase interface {
-	Verify(ctx context.Context, userID, code string, trustDevice bool, ipAddress, userAgent *string) (*types.VerifyResult, error)
+	Verify(ctx context.Context, pendingToken, code string, trustDevice bool, ipAddress, userAgent *string) (*types.VerifyResult, error)
 }
 
 type ViewBackupCodesUseCase interface {

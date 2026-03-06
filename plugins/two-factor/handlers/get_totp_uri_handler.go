@@ -10,8 +10,7 @@ import (
 )
 
 type GetTOTPURIHandler struct {
-	UseCase     usecases.GetTOTPURIUseCase
-	UserService UserService
+	UseCase usecases.GetTOTPURIUseCase
 }
 
 func (h *GetTOTPURIHandler) Handler() http.HandlerFunc {
@@ -36,16 +35,7 @@ func (h *GetTOTPURIHandler) Handler() http.HandlerFunc {
 			return
 		}
 
-		user, err := h.UserService.GetByID(ctx, *reqCtx.UserID)
-		if err != nil {
-			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{
-				"message": "failed to retrieve user",
-			})
-			reqCtx.Handled = true
-			return
-		}
-
-		totpURI, err := h.UseCase.GetTOTPURI(ctx, *reqCtx.UserID, payload.Password, user.Email)
+		totpURI, err := h.UseCase.GetTOTPURI(ctx, *reqCtx.UserID, payload.Password)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusBadRequest, map[string]any{
 				"message": err.Error(),
