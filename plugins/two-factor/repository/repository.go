@@ -5,10 +5,9 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
-	"github.com/GoBetterAuth/go-better-auth/v2/models"
+	"github.com/GoBetterAuth/go-better-auth/v2/internal/util"
 )
 
 type TwoFactorRepository struct {
@@ -36,7 +35,7 @@ func (r *TwoFactorRepository) GetByUserID(ctx context.Context, userID string) (*
 
 func (r *TwoFactorRepository) Create(ctx context.Context, userID, secret, backupCodes string) (*TwoFactorRecord, error) {
 	record := &TwoFactorRecord{
-		ID:          uuid.New().String(),
+		ID:          util.GenerateUUID(),
 		UserID:      userID,
 		Secret:      secret,
 		BackupCodes: backupCodes,
@@ -56,7 +55,7 @@ func (r *TwoFactorRepository) UpdateBackupCodes(ctx context.Context, userID, bac
 	_, err := r.db.NewUpdate().
 		Model(&TwoFactorRecord{}).
 		Set("backup_codes = ?", backupCodes).
-		Set("updated_at = ?", time.Now()).
+		Set("updated_at = ?", time.Now().UTC()).
 		Where("user_id = ?", userID).
 		Exec(ctx)
 	return err
@@ -65,6 +64,35 @@ func (r *TwoFactorRepository) UpdateBackupCodes(ctx context.Context, userID, bac
 func (r *TwoFactorRepository) DeleteByUserID(ctx context.Context, userID string) error {
 	_, err := r.db.NewDelete().
 		Model(&TwoFactorRecord{}).
+		Where("user_id = ?", userID).
+		Exec(ctx)
+	return err
+}
+
+// --- Enabled operations ---
+
+func (r *TwoFactorRepository) IsEnabled(ctx context.Context, userID string) (bool, error) {
+	record := new(TwoFactorRecord)
+	err := r.db.NewSelect().
+		Model(record).
+		Column("enabled").
+		Where("user_id = ?", userID).
+		Scan(ctx)
+
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return record.Enabled, nil
+}
+
+func (r *TwoFactorRepository) SetEnabled(ctx context.Context, userID string, enabled bool) error {
+	_, err := r.db.NewUpdate().
+		Model(&TwoFactorRecord{}).
+		Set("enabled = ?", enabled).
+		Set("updated_at = ?", time.Now().UTC()).
 		Where("user_id = ?", userID).
 		Exec(ctx)
 	return err
@@ -87,7 +115,7 @@ func (r *TwoFactorRepository) GetTrustedDeviceByToken(ctx context.Context, token
 
 func (r *TwoFactorRepository) CreateTrustedDevice(ctx context.Context, userID, token, userAgent string, expiresAt time.Time) (*TrustedDevice, error) {
 	device := &TrustedDevice{
-		ID:        uuid.New().String(),
+		ID:        util.GenerateUUID(),
 		UserID:    userID,
 		Token:     token,
 		UserAgent: userAgent,
@@ -124,19 +152,7 @@ func (r *TwoFactorRepository) DeleteTrustedDevicesByUserID(ctx context.Context, 
 func (r *TwoFactorRepository) DeleteExpiredTrustedDevices(ctx context.Context) error {
 	_, err := r.db.NewDelete().
 		Model(&TrustedDevice{}).
-		Where("expires_at < ?", time.Now()).
-		Exec(ctx)
-	return err
-}
-
-// --- User field operations ---
-
-func (r *TwoFactorRepository) SetUserTwoFactorEnabled(ctx context.Context, userID string, enabled bool) error {
-	_, err := r.db.NewUpdate().
-		Model(&models.User{}).
-		Set("two_factor_enabled = ?", enabled).
-		Set("updated_at = ?", time.Now()).
-		Where("id = ?", userID).
+		Where("expires_at < ?", time.Now().UTC()).
 		Exec(ctx)
 	return err
 }

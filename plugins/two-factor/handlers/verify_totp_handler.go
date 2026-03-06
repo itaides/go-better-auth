@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/GoBetterAuth/go-better-auth/v2/internal/util"
 	"github.com/GoBetterAuth/go-better-auth/v2/models"
@@ -13,10 +12,7 @@ import (
 )
 
 type VerifyTOTPHandler struct {
-	UseCase               usecases.VerifyTOTPUseCase
-	VerificationService   VerificationService
-	TokenService          TokenService
-	TrustedDeviceDuration time.Duration
+	UseCase usecases.VerifyTOTPUseCase
 }
 
 func (h *VerifyTOTPHandler) Handler() http.HandlerFunc {
@@ -34,28 +30,6 @@ func (h *VerifyTOTPHandler) Handler() http.HandlerFunc {
 			return
 		}
 
-		// Look up verification by hashed token
-		hashedToken := h.TokenService.Hash(cookie.Value)
-		verification, err := h.VerificationService.FindByToken(ctx, hashedToken, models.TypeTwoFactorPendingAuth)
-		if err != nil || verification == nil || verification.UserID == nil {
-			reqCtx.SetJSONResponse(http.StatusUnauthorized, map[string]any{
-				"message": "invalid or expired pending token",
-			})
-			reqCtx.Handled = true
-			return
-		}
-
-		// Check expiration
-		if verification.ExpiresAt.Before(time.Now()) {
-			reqCtx.SetJSONResponse(http.StatusUnauthorized, map[string]any{
-				"message": "invalid or expired pending token",
-			})
-			reqCtx.Handled = true
-			return
-		}
-
-		userID := *verification.UserID
-
 		var payload types.VerifyTOTPRequest
 		if err := util.ParseJSON(r, &payload); err != nil {
 			reqCtx.SetJSONResponse(http.StatusUnprocessableEntity, map[string]any{
@@ -68,10 +42,10 @@ func (h *VerifyTOTPHandler) Handler() http.HandlerFunc {
 		clientIP := reqCtx.ClientIP
 		userAgent := r.UserAgent()
 
-		result, err := h.UseCase.Verify(ctx, userID, payload.Code, payload.TrustDevice, &clientIP, &userAgent)
+		result, err := h.UseCase.Verify(ctx, cookie.Value, payload.Code, payload.TrustDevice, &clientIP, &userAgent)
 		if err != nil {
 			status := http.StatusBadRequest
-			if errors.Is(err, constants.ErrInvalidTOTPCode) || errors.Is(err, constants.ErrTwoFactorNotEnabled) {
+			if errors.Is(err, constants.ErrInvalidTOTPCode) || errors.Is(err, constants.ErrTwoFactorNotEnabled) || errors.Is(err, constants.ErrInvalidPendingToken) {
 				status = http.StatusUnauthorized
 			}
 			reqCtx.SetJSONResponse(status, map[string]any{
@@ -80,9 +54,6 @@ func (h *VerifyTOTPHandler) Handler() http.HandlerFunc {
 			reqCtx.Handled = true
 			return
 		}
-
-		// Clean up the pending verification
-		_ = h.VerificationService.Delete(ctx, verification.ID)
 
 		// Set session context values
 		reqCtx.SetUserIDInContext(result.User.ID)
@@ -96,7 +67,7 @@ func (h *VerifyTOTPHandler) Handler() http.HandlerFunc {
 				Name:     "two_factor_trusted",
 				Value:    result.TrustedDeviceToken,
 				Path:     "/",
-				MaxAge:   int(h.TrustedDeviceDuration.Seconds()),
+				MaxAge:   int(result.TrustedDeviceDuration.Seconds()),
 				HttpOnly: true,
 				Secure:   true,
 				SameSite: http.SameSiteLaxMode,
