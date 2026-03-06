@@ -15,6 +15,7 @@ import (
 )
 
 type enableUseCase struct {
+	UserService       rootservices.UserService
 	AccountService    rootservices.AccountService
 	PasswordService   rootservices.PasswordService
 	TokenService      rootservices.TokenService
@@ -27,6 +28,7 @@ type enableUseCase struct {
 }
 
 func NewEnableUseCase(
+	userService rootservices.UserService,
 	accountService rootservices.AccountService,
 	passwordService rootservices.PasswordService,
 	tokenService rootservices.TokenService,
@@ -38,6 +40,7 @@ func NewEnableUseCase(
 	logger models.Logger,
 ) EnableUseCase {
 	return &enableUseCase{
+		UserService:       userService,
 		AccountService:    accountService,
 		PasswordService:   passwordService,
 		TokenService:      tokenService,
@@ -50,7 +53,7 @@ func NewEnableUseCase(
 	}
 }
 
-func (uc *enableUseCase) Enable(ctx context.Context, userID, password, issuer, email string) (*types.EnableResult, error) {
+func (uc *enableUseCase) Enable(ctx context.Context, userID, password, issuer string) (*types.EnableResult, error) {
 	// Verify password
 	if err := verifyPassword(ctx, uc.AccountService, uc.PasswordService, userID, password); err != nil {
 		return nil, err
@@ -63,6 +66,15 @@ func (uc *enableUseCase) Enable(ctx context.Context, userID, password, issuer, e
 	}
 	if existing != nil {
 		return nil, constants.ErrTwoFactorAlreadyEnabled
+	}
+
+	// Fetch user to get email for TOTP URI
+	user, err := uc.UserService.GetByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, constants.ErrUserNotFound
 	}
 
 	// Generate TOTP secret
@@ -101,9 +113,9 @@ func (uc *enableUseCase) Enable(ctx context.Context, userID, password, issuer, e
 		return nil, err
 	}
 
-	// If SkipVerificationOnEnable, mark user as 2FA-enabled immediately
+	// If SkipVerificationOnEnable, mark 2FA as enabled immediately
 	if uc.Config.SkipVerificationOnEnable {
-		if err := uc.Repo.SetUserTwoFactorEnabled(ctx, userID, true); err != nil {
+		if err := uc.Repo.SetEnabled(ctx, userID, true); err != nil {
 			return nil, err
 		}
 	}
@@ -112,7 +124,7 @@ func (uc *enableUseCase) Enable(ctx context.Context, userID, password, issuer, e
 	if issuer == "" {
 		issuer = uc.Config.Issuer
 	}
-	totpURI := uc.TOTPService.BuildURI(secret, issuer, email)
+	totpURI := uc.TOTPService.BuildURI(secret, issuer, user.Email)
 
 	// Publish enabled event
 	payload, err := json.Marshal(map[string]string{"userID": userID})

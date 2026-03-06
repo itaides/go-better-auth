@@ -10,8 +10,7 @@ import (
 )
 
 type EnableHandler struct {
-	UseCase     usecases.EnableUseCase
-	UserService UserService
+	UseCase usecases.EnableUseCase
 }
 
 func (h *EnableHandler) Handler() http.HandlerFunc {
@@ -36,16 +35,7 @@ func (h *EnableHandler) Handler() http.HandlerFunc {
 			return
 		}
 
-		user, err := h.UserService.GetByID(ctx, *reqCtx.UserID)
-		if err != nil {
-			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{
-				"message": "failed to retrieve user",
-			})
-			reqCtx.Handled = true
-			return
-		}
-
-		result, err := h.UseCase.Enable(ctx, *reqCtx.UserID, payload.Password, payload.Issuer, user.Email)
+		result, err := h.UseCase.Enable(ctx, *reqCtx.UserID, payload.Password, payload.Issuer)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusBadRequest, map[string]any{
 				"message": err.Error(),

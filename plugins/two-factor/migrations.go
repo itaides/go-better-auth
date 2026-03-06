@@ -23,12 +23,12 @@ func twoFactorSQLiteInitial() migrations.Migration {
 			return migrations.ExecStatements(
 				ctx,
 				tx,
-				`ALTER TABLE users ADD COLUMN two_factor_enabled BOOLEAN DEFAULT FALSE;`,
 				`CREATE TABLE IF NOT EXISTS two_factor (
   id VARCHAR(36) PRIMARY KEY,
   user_id VARCHAR(36) NOT NULL,
   secret TEXT NOT NULL,
   backup_codes TEXT NOT NULL,
+  enabled BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -54,7 +54,6 @@ func twoFactorSQLiteInitial() migrations.Migration {
 				tx,
 				`DROP TABLE IF EXISTS trusted_devices;`,
 				`DROP TABLE IF EXISTS two_factor;`,
-				`ALTER TABLE users DROP COLUMN two_factor_enabled;`,
 			)
 		},
 	}
@@ -67,7 +66,6 @@ func twoFactorPostgresInitial() migrations.Migration {
 			return migrations.ExecStatements(
 				ctx,
 				tx,
-				`ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_enabled BOOLEAN DEFAULT FALSE;`,
 				`CREATE OR REPLACE FUNCTION two_factor_update_updated_at_func()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -80,6 +78,7 @@ $$ LANGUAGE plpgsql;`,
   user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   secret TEXT NOT NULL,
   backup_codes TEXT NOT NULL,
+  enabled BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );`,
@@ -110,7 +109,6 @@ $$ LANGUAGE plpgsql;`,
 				`DROP FUNCTION IF EXISTS two_factor_update_updated_at_func();`,
 				`DROP TABLE IF EXISTS trusted_devices;`,
 				`DROP TABLE IF EXISTS two_factor;`,
-				`ALTER TABLE users DROP COLUMN IF EXISTS two_factor_enabled;`,
 			)
 		},
 	}
@@ -123,12 +121,12 @@ func twoFactorMySQLInitial() migrations.Migration {
 			return migrations.ExecStatements(
 				ctx,
 				tx,
-				`ALTER TABLE users ADD COLUMN two_factor_enabled BOOLEAN DEFAULT FALSE;`,
 				`CREATE TABLE IF NOT EXISTS two_factor (
   id VARCHAR(36) PRIMARY KEY,
   user_id VARCHAR(36) NOT NULL,
   secret TEXT NOT NULL,
   backup_codes TEXT NOT NULL,
+  enabled BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -154,7 +152,6 @@ func twoFactorMySQLInitial() migrations.Migration {
 				tx,
 				`DROP TABLE IF EXISTS trusted_devices;`,
 				`DROP TABLE IF EXISTS two_factor;`,
-				`ALTER TABLE users DROP COLUMN two_factor_enabled;`,
 			)
 		},
 	}

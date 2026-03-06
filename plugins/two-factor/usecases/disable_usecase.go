@@ -56,11 +56,6 @@ func (uc *disableUseCase) Disable(ctx context.Context, userID, password string) 
 		return err
 	}
 
-	// Set user.two_factor_enabled = false
-	if err := uc.Repo.SetUserTwoFactorEnabled(ctx, userID, false); err != nil {
-		return err
-	}
-
 	// Delete trusted devices
 	if err := uc.Repo.DeleteTrustedDevicesByUserID(ctx, userID); err != nil {
 		return err

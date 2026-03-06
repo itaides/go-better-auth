@@ -29,9 +29,9 @@ func (p *TwoFactorPlugin) interceptSignInHook(reqCtx *models.RequestContext) err
 		return nil
 	}
 
-	// Check if user has 2FA enabled
-	user, err := p.userService.GetByID(reqCtx.Request.Context(), userID)
-	if err != nil || user == nil || user.TwoFactorEnabled == nil || !*user.TwoFactorEnabled {
+	// Check if user has 2FA enabled via the two_factor table
+	enabled, err := p.repo.IsEnabled(reqCtx.Request.Context(), userID)
+	if err != nil || !enabled {
 		return nil // No 2FA, pass through
 	}
 
@@ -98,12 +98,12 @@ func (p *TwoFactorPlugin) hasTrustedDevice(reqCtx *models.RequestContext) bool {
 	}
 
 	// Check expiry
-	if device.ExpiresAt.Before(time.Now()) {
+	if device.ExpiresAt.Before(time.Now().UTC()) {
 		return false
 	}
 
 	// Refresh expiry
-	newExpiry := time.Now().Add(p.pluginConfig.TrustedDeviceDuration)
+	newExpiry := time.Now().UTC().Add(p.pluginConfig.TrustedDeviceDuration)
 	_ = p.repo.RefreshTrustedDevice(reqCtx.Request.Context(), hashedToken, newExpiry)
 
 	return true

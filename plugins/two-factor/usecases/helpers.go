@@ -51,7 +51,7 @@ func createTrustedDevice(
 		ua = *userAgent
 	}
 
-	expiresAt := time.Now().Add(config.TrustedDeviceDuration)
+	expiresAt := time.Now().UTC().Add(config.TrustedDeviceDuration)
 	_, err = repo.CreateTrustedDevice(ctx, userID, hashedToken, ua, expiresAt)
 	if err != nil {
 		return "", err
