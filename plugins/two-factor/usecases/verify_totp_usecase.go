@@ -3,6 +3,7 @@ package usecases
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/GoBetterAuth/go-better-auth/v2/internal/util"
@@ -143,16 +144,16 @@ func (uc *verifyTOTPUseCase) resolvePendingToken(ctx context.Context, rawToken s
 	hashedToken := uc.TokenService.Hash(rawToken)
 	verification, err := uc.VerificationService.GetByToken(ctx, hashedToken)
 	if err != nil {
-		return "", "", constants.ErrInvalidPendingToken
+		return "", "", errors.New(err.Error())
 	}
 	if verification == nil || verification.UserID == nil {
 		return "", "", constants.ErrInvalidPendingToken
 	}
 	if verification.Type != models.TypeTwoFactorPendingAuth {
-		return "", "", constants.ErrInvalidPendingToken
+		return "", "", constants.ErrInvalidVerificationType
 	}
 	if verification.ExpiresAt.Before(time.Now().UTC()) {
-		return "", "", constants.ErrInvalidPendingToken
+		return "", "", constants.ErrPendingTokenExpired
 	}
 	return *verification.UserID, verification.ID, nil
 }
