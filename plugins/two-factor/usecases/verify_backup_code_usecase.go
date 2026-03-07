@@ -129,6 +129,8 @@ func (uc *verifyBackupCodeUseCase) Verify(ctx context.Context, pendingToken, cod
 		Session:               session,
 		SessionToken:          token,
 		TrustedDeviceDuration: uc.Config.TrustedDeviceDuration,
+		SecureCookie:          uc.Config.SecureCookie,
+		SameSite:              types.ParseSameSite(uc.Config.SameSite),
 	}
 
 	// Optionally trust device

@@ -1,6 +1,8 @@
 package types
 
 import (
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/GoBetterAuth/go-better-auth/v2/models"
@@ -16,6 +18,8 @@ type TwoFactorPluginConfig struct {
 	BackupCodeLength         int           `json:"backup_code_length" toml:"backup_code_length"`
 	TrustedDeviceDuration    time.Duration `json:"trusted_device_duration" toml:"trusted_device_duration"`
 	PendingTokenExpiry       time.Duration `json:"pending_token_expiry" toml:"pending_token_expiry"`
+	SecureCookie             bool          `json:"secure_cookie" toml:"secure_cookie"`
+	SameSite                 string        `json:"same_site" toml:"same_site"`
 }
 
 func (c *TwoFactorPluginConfig) ApplyDefaults() {
@@ -36,6 +40,25 @@ func (c *TwoFactorPluginConfig) ApplyDefaults() {
 	}
 	if c.PendingTokenExpiry == 0 {
 		c.PendingTokenExpiry = 5 * time.Minute
+	}
+	if c.SameSite == "" {
+		c.SameSite = "lax"
+	}
+}
+
+// ParseSameSite converts a string to http.SameSite.
+// Accepted values: "strict", "lax", "none" (case-insensitive).
+// Defaults to http.SameSiteLaxMode for unrecognized values.
+func ParseSameSite(s string) http.SameSite {
+	switch strings.ToLower(s) {
+	case "strict":
+		return http.SameSiteStrictMode
+	case "none":
+		return http.SameSiteNoneMode
+	case "lax":
+		return http.SameSiteLaxMode
+	default:
+		return http.SameSiteLaxMode
 	}
 }
 
@@ -115,4 +138,6 @@ type VerifyResult struct {
 	SessionToken          string
 	TrustedDeviceToken    string        // empty if not trusting
 	TrustedDeviceDuration time.Duration // for cookie MaxAge
+	SecureCookie          bool
+	SameSite              http.SameSite
 }

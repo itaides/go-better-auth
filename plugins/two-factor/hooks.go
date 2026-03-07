@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/GoBetterAuth/go-better-auth/v2/models"
+	"github.com/GoBetterAuth/go-better-auth/v2/plugins/two-factor/types"
 )
 
 func (p *TwoFactorPlugin) buildHooks() []models.Hook {
@@ -68,8 +69,8 @@ func (p *TwoFactorPlugin) interceptSignInHook(reqCtx *models.RequestContext) err
 		Path:     "/",
 		MaxAge:   int(p.pluginConfig.PendingTokenExpiry.Seconds()),
 		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   p.pluginConfig.SecureCookie,
+		SameSite: types.ParseSameSite(p.pluginConfig.SameSite),
 	})
 
 	// Clear session values — prevent session creation
