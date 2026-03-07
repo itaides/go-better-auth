@@ -81,8 +81,8 @@ func (h *VerifyBackupCodeHandler) Handler() http.HandlerFunc {
 			Path:     "/",
 			MaxAge:   -1,
 			HttpOnly: true,
-			Secure:   true,
-			SameSite: http.SameSiteLaxMode,
+			Secure:   result.SecureCookie,
+			SameSite: result.SameSite,
 		})
 
 		reqCtx.SetJSONResponse(http.StatusOK, &types.VerifyBackupCodeResponse{
