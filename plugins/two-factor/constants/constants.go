@@ -20,4 +20,6 @@ var (
 	ErrInvalidPassword         = errors.New("invalid password")
 	ErrAccountNotFound         = errors.New("credential account not found")
 	ErrUserNotFound            = errors.New("user not found")
+	ErrInvalidVerificationType = errors.New("invalid verification type")
+	ErrPendingTokenExpired     = errors.New("pending token has expired")
 )
