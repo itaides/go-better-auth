@@ -74,8 +74,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;`,
 				`CREATE TABLE IF NOT EXISTS two_factor (
-  id VARCHAR(36) PRIMARY KEY,
-  user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   secret TEXT NOT NULL,
   backup_codes TEXT NOT NULL,
   enabled BOOLEAN NOT NULL DEFAULT FALSE,
@@ -89,8 +89,8 @@ $$ LANGUAGE plpgsql;`,
   FOR EACH ROW
   EXECUTE FUNCTION two_factor_update_updated_at_func();`,
 				`CREATE TABLE IF NOT EXISTS trusted_devices (
-  id VARCHAR(36) PRIMARY KEY,
-  user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   token VARCHAR(64) NOT NULL,
   user_agent TEXT NOT NULL DEFAULT '',
   expires_at TIMESTAMPTZ NOT NULL,
@@ -122,8 +122,8 @@ func twoFactorMySQLInitial() migrations.Migration {
 				ctx,
 				tx,
 				`CREATE TABLE IF NOT EXISTS two_factor (
-  id VARCHAR(36) PRIMARY KEY,
-  user_id VARCHAR(36) NOT NULL,
+  id BINARY(16) NOT NULL PRIMARY KEY,
+  user_id BINARY(16) NOT NULL,
   secret TEXT NOT NULL,
   backup_codes TEXT NOT NULL,
   enabled BOOLEAN NOT NULL DEFAULT FALSE,
@@ -133,9 +133,9 @@ func twoFactorMySQLInitial() migrations.Migration {
   UNIQUE INDEX idx_two_factor_user_id (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
 				`CREATE TABLE IF NOT EXISTS trusted_devices (
-  id VARCHAR(36) PRIMARY KEY,
-  user_id VARCHAR(36) NOT NULL,
-  token VARCHAR(64) NOT NULL,
+  id BINARY(16) NOT NULL PRIMARY KEY,
+  user_id BINARY(16) NOT NULL,
+  token VARCHAR(255) NOT NULL,
   user_agent TEXT NOT NULL,
   expires_at TIMESTAMP NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
