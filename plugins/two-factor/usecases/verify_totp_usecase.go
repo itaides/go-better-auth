@@ -118,6 +118,8 @@ func (uc *verifyTOTPUseCase) Verify(ctx context.Context, pendingToken, code stri
 		Session:               session,
 		SessionToken:          token,
 		TrustedDeviceDuration: uc.Config.TrustedDeviceDuration,
+		SecureCookie:          uc.Config.SecureCookie,
+		SameSite:              types.ParseSameSite(uc.Config.SameSite),
 	}
 
 	// Optionally trust device
