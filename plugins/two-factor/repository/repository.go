@@ -41,14 +41,21 @@ func (r *TwoFactorRepository) Create(ctx context.Context, userID, secret, backup
 		BackupCodes: backupCodes,
 	}
 
-	_, err := r.db.NewInsert().
-		Model(record).
-		Exec(ctx)
-	if err != nil {
-		return nil, err
-	}
+	err := r.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err := tx.NewInsert().
+			Model(record).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
 
-	return record, nil
+		return tx.NewSelect().
+			Model(record).
+			WherePK().
+			Scan(ctx)
+	})
+
+	return record, err
 }
 
 func (r *TwoFactorRepository) UpdateBackupCodes(ctx context.Context, userID, backupCodes string) error {
@@ -122,14 +129,21 @@ func (r *TwoFactorRepository) CreateTrustedDevice(ctx context.Context, userID, t
 		ExpiresAt: expiresAt,
 	}
 
-	_, err := r.db.NewInsert().
-		Model(device).
-		Exec(ctx)
-	if err != nil {
-		return nil, err
-	}
+	err := r.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err := tx.NewInsert().
+			Model(device).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
 
-	return device, nil
+		return tx.NewSelect().
+			Model(device).
+			WherePK().
+			Scan(ctx)
+	})
+
+	return device, err
 }
 
 func (r *TwoFactorRepository) RefreshTrustedDevice(ctx context.Context, token string, expiresAt time.Time) error {
