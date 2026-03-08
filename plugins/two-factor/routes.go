@@ -20,13 +20,15 @@ func Routes(p *TwoFactorPlugin) []models.Route {
 		UseCase: uc.GetTOTPURI,
 	}
 	verifyTOTPHandler := &handlers.VerifyTOTPHandler{
-		UseCase: uc.VerifyTOTP,
+		UseCase:      uc.VerifyTOTP,
+		PluginConfig: p.pluginConfig,
 	}
 	generateBackupCodesHandler := &handlers.GenerateBackupCodesHandler{
 		UseCase: uc.GenerateBackupCodes,
 	}
 	verifyBackupCodeHandler := &handlers.VerifyBackupCodeHandler{
-		UseCase: uc.VerifyBackupCode,
+		UseCase:      uc.VerifyBackupCode,
+		PluginConfig: p.pluginConfig,
 	}
 	viewBackupCodesHandler := &handlers.ViewBackupCodesHandler{
 		UseCase: uc.ViewBackupCodes,

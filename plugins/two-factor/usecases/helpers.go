@@ -126,7 +126,9 @@ func createSessionForUser(
 	}
 
 	// Delete the pending verification
-	_ = verificationService.Delete(ctx, verificationID)
+	if err := verificationService.Delete(ctx, verificationID); err != nil {
+		return nil, "", err
+	}
 
 	return session, token, nil
 }

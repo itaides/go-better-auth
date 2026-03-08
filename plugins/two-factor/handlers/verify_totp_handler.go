@@ -12,7 +12,8 @@ import (
 )
 
 type VerifyTOTPHandler struct {
-	UseCase usecases.VerifyTOTPUseCase
+	UseCase      usecases.VerifyTOTPUseCase
+	PluginConfig *types.TwoFactorPluginConfig
 }
 
 func (h *VerifyTOTPHandler) Handler() http.HandlerFunc {
@@ -67,10 +68,10 @@ func (h *VerifyTOTPHandler) Handler() http.HandlerFunc {
 				Name:     "two_factor_trusted",
 				Value:    result.TrustedDeviceToken,
 				Path:     "/",
-				MaxAge:   int(result.TrustedDeviceDuration.Seconds()),
+				MaxAge:   int(h.PluginConfig.TrustedDeviceDuration.Seconds()),
 				HttpOnly: true,
-				Secure:   result.SecureCookie,
-				SameSite: result.SameSite,
+				Secure:   h.PluginConfig.SecureCookie,
+				SameSite: types.ParseSameSite(h.PluginConfig.SameSite),
 			})
 		}
 
@@ -81,8 +82,8 @@ func (h *VerifyTOTPHandler) Handler() http.HandlerFunc {
 			Path:     "/",
 			MaxAge:   -1,
 			HttpOnly: true,
-			Secure:   result.SecureCookie,
-			SameSite: result.SameSite,
+			Secure:   h.PluginConfig.SecureCookie,
+			SameSite: types.ParseSameSite(h.PluginConfig.SameSite),
 		})
 
 		reqCtx.SetJSONResponse(http.StatusOK, &types.VerifyTOTPResponse{

@@ -75,25 +75,21 @@ func (uc *enableUseCase) Enable(ctx context.Context, userID, password, issuer st
 		return nil, constants.ErrUserNotFound
 	}
 
-	// Generate TOTP secret
+	// Generate TOTP secret and encrypt it
 	secret, err := uc.TOTPService.GenerateSecret()
 	if err != nil {
 		return nil, err
 	}
-
-	// Generate backup codes
-	backupCodes, err := uc.BackupCodeService.Generate()
-	if err != nil {
-		return nil, err
-	}
-
-	// Encrypt secret
 	encryptedSecret, err := uc.TokenService.Encrypt(secret)
 	if err != nil {
 		return nil, err
 	}
 
-	// Hash backup codes for storage
+	// Generate backup codes and hash them for storage
+	backupCodes, err := uc.BackupCodeService.Generate()
+	if err != nil {
+		return nil, err
+	}
 	hashedCodes, err := uc.BackupCodeService.HashCodes(backupCodes)
 	if err != nil {
 		return nil, err
@@ -104,7 +100,9 @@ func (uc *enableUseCase) Enable(ctx context.Context, userID, password, issuer st
 	}
 
 	// Delete any existing record (in case of stale data) and create new
-	_ = uc.TwoFactorRepo.DeleteByUserID(ctx, userID)
+	if err := uc.TwoFactorRepo.DeleteByUserID(ctx, userID); err != nil {
+		return nil, err
+	}
 
 	_, err = uc.TwoFactorRepo.Create(ctx, userID, encryptedSecret, string(hashedJSON))
 	if err != nil {

@@ -12,7 +12,7 @@ type TwoFactorPluginConfig struct {
 	Enabled                  bool          `json:"enabled" toml:"enabled"`
 	Issuer                   string        `json:"issuer" toml:"issuer"`
 	Digits                   int           `json:"digits" toml:"digits"`
-	Period                   int           `json:"period" toml:"period"`
+	PeriodSeconds            int           `json:"period_seconds" toml:"period_seconds"`
 	SkipVerificationOnEnable bool          `json:"skip_verification_on_enable" toml:"skip_verification_on_enable"`
 	BackupCodeCount          int           `json:"backup_code_count" toml:"backup_code_count"`
 	TrustedDeviceDuration    time.Duration `json:"trusted_device_duration" toml:"trusted_device_duration"`
@@ -25,8 +25,8 @@ func (c *TwoFactorPluginConfig) ApplyDefaults() {
 	if c.Digits == 0 {
 		c.Digits = 6
 	}
-	if c.Period == 0 {
-		c.Period = 30
+	if c.PeriodSeconds == 0 {
+		c.PeriodSeconds = 30
 	}
 	if c.BackupCodeCount == 0 {
 		c.BackupCodeCount = 10
@@ -129,11 +129,8 @@ type EnableResult struct {
 }
 
 type VerifyResult struct {
-	User                  *models.User
-	Session               *models.Session
-	SessionToken          string
-	TrustedDeviceToken    string        // empty if not trusting
-	TrustedDeviceDuration time.Duration // for cookie MaxAge
-	SecureCookie          bool
-	SameSite              http.SameSite
+	User               *models.User
+	Session            *models.Session
+	SessionToken       string
+	TrustedDeviceToken string // empty if not trusting
 }

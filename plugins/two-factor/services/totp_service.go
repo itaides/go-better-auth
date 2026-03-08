@@ -14,12 +14,12 @@ import (
 )
 
 type TOTPService struct {
-	Digits int
-	Period int
+	Digits        int
+	PeriodSeconds int
 }
 
-func NewTOTPService(digits, period int) *TOTPService {
-	return &TOTPService{Digits: digits, Period: period}
+func NewTOTPService(digits, periodSeconds int) *TOTPService {
+	return &TOTPService{Digits: digits, PeriodSeconds: periodSeconds}
 }
 
 // GenerateSecret generates a 20-byte cryptographically random secret, base32 encoded.
@@ -37,7 +37,7 @@ func (s *TOTPService) GenerateCode(secret string, t time.Time) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	counter := uint64(t.Unix()) / uint64(s.Period)
+	counter := uint64(t.Unix()) / uint64(s.PeriodSeconds)
 	return s.hotp(key, counter), nil
 }
 
@@ -47,7 +47,7 @@ func (s *TOTPService) ValidateCode(secret, code string, t time.Time) bool {
 	if err != nil {
 		return false
 	}
-	counter := uint64(t.Unix()) / uint64(s.Period)
+	counter := uint64(t.Unix()) / uint64(s.PeriodSeconds)
 	for i := int64(-1); i <= 1; i++ {
 		c := uint64(int64(counter) + i)
 		if s.hotp(key, c) == code {
@@ -64,7 +64,7 @@ func (s *TOTPService) BuildURI(secret, issuer, email string) string {
 	v.Set("secret", secret)
 	v.Set("issuer", issuer)
 	v.Set("digits", fmt.Sprintf("%d", s.Digits))
-	v.Set("period", fmt.Sprintf("%d", s.Period))
+	v.Set("period", fmt.Sprintf("%d", s.PeriodSeconds))
 	return fmt.Sprintf("otpauth://totp/%s?%s", label, v.Encode())
 }
 
