@@ -148,8 +148,6 @@ func TestPluginInit(t *testing.T) {
 // database connection. These scenarios should be covered by integration tests.
 
 func TestVerifyTOTPHandlerSuccess(t *testing.T) {
-	enabledTrue := true
-	_ = enabledTrue
 	mockUC := &mockVerifyTOTPUseCase{
 		VerifyFn: func(_ context.Context, pendingToken, code string, trustDevice bool, ipAddr, ua *string) (*types.VerifyResult, error) {
 			return &types.VerifyResult{
