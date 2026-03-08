@@ -9,7 +9,7 @@ import (
 )
 
 func newTestBackupCodeService(count int) *BackupCodeService {
-	return NewBackupCodeService(count, NewArgon2PasswordService())
+	return NewBackupCodeService(count, NewArgon2HashService())
 }
 
 func TestGenerateBackupCodes(t *testing.T) {
