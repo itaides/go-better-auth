@@ -3,7 +3,6 @@ package usecases
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"time"
 
 	"github.com/GoBetterAuth/go-better-auth/v2/internal/util"
@@ -72,7 +71,7 @@ func resolvePendingToken(
 	hashedToken := tokenService.Hash(rawToken)
 	verification, err := verificationService.GetByToken(ctx, hashedToken)
 	if err != nil {
-		return "", "", errors.New(err.Error())
+		return "", "", err
 	}
 	if verification == nil || verification.UserID == nil {
 		return "", "", constants.ErrInvalidPendingToken
@@ -80,7 +79,7 @@ func resolvePendingToken(
 	if verification.Type != models.TypeTwoFactorPendingAuth {
 		return "", "", constants.ErrInvalidVerificationType
 	}
-	if verification.ExpiresAt.Before(time.Now().UTC()) {
+	if verificationService.IsExpired(verification) {
 		return "", "", constants.ErrPendingTokenExpired
 	}
 	return *verification.UserID, verification.ID, nil

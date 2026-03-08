@@ -14,7 +14,7 @@ func (p *TwoFactorPlugin) buildHooks() []models.Hook {
 			Stage:   models.HookAfter,
 			Matcher: p.signInSuccessMatcher,
 			Handler: p.interceptSignInHook,
-			Order:   10,
+			Order:   1, // Must run before session (5) and JWT (10) hooks to intercept auth
 		},
 	}
 }

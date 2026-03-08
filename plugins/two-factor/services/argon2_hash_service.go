@@ -7,15 +7,15 @@ import (
 	"golang.org/x/crypto/argon2"
 )
 
-// Argon2PasswordService provides Argon2-based password hashing and verification
-// for the two-factor plugin, used to hash and verify backup codes.
-type Argon2PasswordService struct{}
+// Argon2HashService provides Argon2-based hashing and verification
+// for backup codes in the two-factor plugin.
+type Argon2HashService struct{}
 
-func NewArgon2PasswordService() *Argon2PasswordService {
-	return &Argon2PasswordService{}
+func NewArgon2HashService() *Argon2HashService {
+	return &Argon2HashService{}
 }
 
-func (p *Argon2PasswordService) Hash(password string) (string, error) {
+func (p *Argon2HashService) Hash(password string) (string, error) {
 	salt := make([]byte, 16)
 	if _, err := rand.Read(salt); err != nil {
 		return "", err
@@ -25,7 +25,7 @@ func (p *Argon2PasswordService) Hash(password string) (string, error) {
 	return base64.RawStdEncoding.EncodeToString(full), nil
 }
 
-func (p *Argon2PasswordService) Verify(password, encoded string) bool {
+func (p *Argon2HashService) Verify(password, encoded string) bool {
 	data, err := base64.RawStdEncoding.DecodeString(encoded)
 	if err != nil || len(data) < 16 {
 		return false
