@@ -97,8 +97,8 @@ func (p *TwoFactorPlugin) Init(ctx *models.PluginContext) error {
 
 	// Create domain services
 	p.totpService = &services.TOTPService{
-		Digits: p.pluginConfig.Digits,
-		Period: p.pluginConfig.Period,
+		Digits:        p.pluginConfig.Digits,
+		PeriodSeconds: p.pluginConfig.PeriodSeconds,
 	}
 	p.backupCodeService = &services.BackupCodeService{
 		Count:           p.pluginConfig.BackupCodeCount,

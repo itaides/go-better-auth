@@ -160,14 +160,14 @@ func TestVerifyTOTPHandlerSuccess(t *testing.T) {
 					UserID:    "user-1",
 					ExpiresAt: time.Now().Add(24 * time.Hour),
 				},
-				SessionToken:          "session-token-xyz",
-				TrustedDeviceDuration: 30 * 24 * time.Hour,
+				SessionToken: "session-token-xyz",
 			}, nil
 		},
 	}
 
 	handler := &handlers.VerifyTOTPHandler{
-		UseCase: mockUC,
+		UseCase:      mockUC,
+		PluginConfig: &types.TwoFactorPluginConfig{},
 	}
 
 	body, _ := json.Marshal(types.VerifyTOTPRequest{

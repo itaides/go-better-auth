@@ -104,12 +104,9 @@ func (uc *verifyBackupCodeUseCase) Verify(ctx context.Context, pendingToken, cod
 	}
 
 	result := &types.VerifyResult{
-		User:                  user,
-		Session:               session,
-		SessionToken:          token,
-		TrustedDeviceDuration: uc.Config.TrustedDeviceDuration,
-		SecureCookie:          uc.Config.SecureCookie,
-		SameSite:              types.ParseSameSite(uc.Config.SameSite),
+		User:         user,
+		Session:      session,
+		SessionToken: token,
 	}
 
 	// Optionally trust device
