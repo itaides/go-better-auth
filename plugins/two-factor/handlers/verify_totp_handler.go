@@ -69,8 +69,8 @@ func (h *VerifyTOTPHandler) Handler() http.HandlerFunc {
 				Path:     "/",
 				MaxAge:   int(result.TrustedDeviceDuration.Seconds()),
 				HttpOnly: true,
-				Secure:   true,
-				SameSite: http.SameSiteLaxMode,
+				Secure:   result.SecureCookie,
+				SameSite: result.SameSite,
 			})
 		}
 
