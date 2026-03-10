@@ -53,7 +53,7 @@ func TestGetUserStateHandler(t *testing.T) {
 		t.Parallel()
 
 		useCase, userStateRepo, _, _ := admintests.NewStateUseCaseFixture()
-		userStateRepo.On("GetByUserID", mock.Anything, "user-1").Return(&types.AdminUserState{UserID: "user-1", IsBanned: false}, nil).Once()
+		userStateRepo.On("GetByUserID", mock.Anything, "user-1").Return(&types.AdminUserState{UserID: "user-1", Banned: false}, nil).Once()
 		handler := adminhandlers.NewGetUserStateHandler(useCase)
 
 		req, w, reqCtx := internaltests.NewHandlerRequest(t, http.MethodGet, "/admin/states/users/user-1", nil)
@@ -91,7 +91,7 @@ func TestUpsertUserStateHandler(t *testing.T) {
 		t.Parallel()
 
 		useCase, userStateRepo, _, impRepo := admintests.NewStateUseCaseFixture()
-		request := types.UpsertUserStateRequest{IsBanned: true}
+		request := types.UpsertUserStateRequest{Banned: true}
 		actorID := "actor-1"
 		impRepo.On("UserExists", mock.Anything, "user-1").Return(true, nil).Once()
 		userStateRepo.On("Upsert", mock.Anything, mock.AnythingOfType("*types.AdminUserState")).Return(constants.ErrBadRequest).Once()
@@ -111,8 +111,8 @@ func TestUpsertUserStateHandler(t *testing.T) {
 		t.Parallel()
 
 		useCase, userStateRepo, _, impRepo := admintests.NewStateUseCaseFixture()
-		request := types.UpsertUserStateRequest{IsBanned: true}
-		result := &types.AdminUserState{UserID: "user-1", IsBanned: true}
+		request := types.UpsertUserStateRequest{Banned: true}
+		result := &types.AdminUserState{UserID: "user-1", Banned: true}
 		impRepo.On("UserExists", mock.Anything, "user-1").Return(true, nil).Once()
 		userStateRepo.On("Upsert", mock.Anything, mock.AnythingOfType("*types.AdminUserState")).Return(nil).Once()
 		userStateRepo.On("GetByUserID", mock.Anything, "user-1").Return(result, nil).Once()
@@ -196,7 +196,7 @@ func TestGetBannedUserStatesHandler(t *testing.T) {
 		t.Parallel()
 
 		useCase, userStateRepo, _, _ := admintests.NewStateUseCaseFixture()
-		userStateRepo.On("GetBanned", mock.Anything).Return([]types.AdminUserState{{UserID: "user-1", IsBanned: true}}, nil).Once()
+		userStateRepo.On("GetBanned", mock.Anything).Return([]types.AdminUserState{{UserID: "user-1", Banned: true}}, nil).Once()
 		handler := adminhandlers.NewGetBannedUserStatesHandler(useCase)
 
 		req, w, reqCtx := internaltests.NewHandlerRequest(t, http.MethodGet, "/admin/states/users/banned", nil)
@@ -254,7 +254,7 @@ func TestBanUserHandler(t *testing.T) {
 
 		useCase, userStateRepo, _, impRepo := admintests.NewStateUseCaseFixture()
 		request := types.BanUserRequest{}
-		result := &types.AdminUserState{UserID: "user-1", IsBanned: true}
+		result := &types.AdminUserState{UserID: "user-1", Banned: true}
 		impRepo.On("UserExists", mock.Anything, "user-1").Return(true, nil).Once()
 		userStateRepo.On("Upsert", mock.Anything, mock.AnythingOfType("*types.AdminUserState")).Return(nil).Once()
 		userStateRepo.On("GetByUserID", mock.Anything, "user-1").Return(result, nil).Once()
@@ -302,7 +302,7 @@ func TestUnbanUserHandler(t *testing.T) {
 		t.Parallel()
 
 		useCase, userStateRepo, _, impRepo := admintests.NewStateUseCaseFixture()
-		result := &types.AdminUserState{UserID: "user-1", IsBanned: false}
+		result := &types.AdminUserState{UserID: "user-1", Banned: false}
 		impRepo.On("UserExists", mock.Anything, "user-1").Return(true, nil).Once()
 		userStateRepo.On("Upsert", mock.Anything, mock.AnythingOfType("*types.AdminUserState")).Return(nil).Once()
 		userStateRepo.On("GetByUserID", mock.Anything, "user-1").Return(result, nil).Once()

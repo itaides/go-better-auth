@@ -54,13 +54,13 @@ func TestStateService_UpsertUserState(t *testing.T) {
 			name:       "ban with details",
 			userExists: true,
 			request: admintypes.UpsertUserStateRequest{
-				IsBanned:     true,
+				Banned:       true,
 				BannedUntil:  &now,
 				BannedReason: admintests.PtrString(t, "reason"),
 			},
 			actor: admintests.PtrString(t, "actor"),
 			expectCall: func(s *admintypes.AdminUserState) bool {
-				return s.IsBanned &&
+				return s.Banned &&
 					*s.BannedByUserID == "actor" &&
 					s.BannedReason != nil && *s.BannedReason == "reason" &&
 					s.BannedUntil.Equal(now)
@@ -70,10 +70,10 @@ func TestStateService_UpsertUserState(t *testing.T) {
 			name:       "unban",
 			userExists: true,
 			request: admintypes.UpsertUserStateRequest{
-				IsBanned: false,
+				Banned: false,
 			},
 			expectCall: func(s *admintypes.AdminUserState) bool {
-				return !s.IsBanned
+				return !s.Banned
 			},
 		},
 		{
@@ -81,7 +81,7 @@ func TestStateService_UpsertUserState(t *testing.T) {
 			userExists: true,
 			hasRepoErr: true,
 			request: admintypes.UpsertUserStateRequest{
-				IsBanned: false,
+				Banned: false,
 			},
 		},
 	}
@@ -140,7 +140,7 @@ func TestStateService_GetBannedUserStates(t *testing.T) {
 	svc, usr, _, _ := newStateServiceFixture()
 	ctx := context.Background()
 
-	usr.On("GetBanned", mock.Anything).Return([]admintypes.AdminUserState{{UserID: "u1", IsBanned: true}}, nil).Once()
+	usr.On("GetBanned", mock.Anything).Return([]admintypes.AdminUserState{{UserID: "u1", Banned: true}}, nil).Once()
 	list, err := svc.GetBannedUserStates(ctx)
 	assert.NoError(t, err)
 	assert.Len(t, list, 1)

@@ -35,7 +35,7 @@ func (p *AdminPlugin) enforceState(reqCtx *models.RequestContext) error {
 		return nil
 	}
 
-	if state != nil && state.IsBanned {
+	if state != nil && state.Banned {
 		if state.BannedUntil == nil || state.BannedUntil.After(time.Now().UTC()) {
 			reqCtx.SetJSONResponse(http.StatusForbidden, map[string]any{"message": "user is banned"})
 			reqCtx.Handled = true

@@ -39,6 +39,29 @@ func (h *CreateAccountHandler) Handler() http.HandlerFunc {
 	}
 }
 
+type GetUserAccountsHandler struct {
+	useCase usecases.AccountsUseCase
+}
+
+func NewGetUserAccountsHandler(useCase usecases.AccountsUseCase) *GetUserAccountsHandler {
+	return &GetUserAccountsHandler{useCase: useCase}
+}
+
+func (h *GetUserAccountsHandler) Handler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		reqCtx, _ := models.GetRequestContext(r.Context())
+		userID := r.PathValue("user_id")
+
+		accounts, err := h.useCase.GetByUserID(r.Context(), userID)
+		if err != nil {
+			respondAccountsError(reqCtx, err)
+			return
+		}
+
+		reqCtx.SetJSONResponse(http.StatusOK, &types.UserAccountsResponse{Accounts: accounts})
+	}
+}
+
 type GetAccountByIDHandler struct {
 	useCase usecases.AccountsUseCase
 }
@@ -64,29 +87,6 @@ func (h *GetAccountByIDHandler) Handler() http.HandlerFunc {
 		}
 
 		reqCtx.SetJSONResponse(http.StatusOK, &types.GetAccountByIDResponse{Account: account})
-	}
-}
-
-type GetUserAccountsHandler struct {
-	useCase usecases.AccountsUseCase
-}
-
-func NewGetUserAccountsHandler(useCase usecases.AccountsUseCase) *GetUserAccountsHandler {
-	return &GetUserAccountsHandler{useCase: useCase}
-}
-
-func (h *GetUserAccountsHandler) Handler() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		reqCtx, _ := models.GetRequestContext(r.Context())
-		userID := r.PathValue("user_id")
-
-		accounts, err := h.useCase.GetByUserID(r.Context(), userID)
-		if err != nil {
-			respondAccountsError(reqCtx, err)
-			return
-		}
-
-		reqCtx.SetJSONResponse(http.StatusOK, &types.UserAccountsResponse{Accounts: accounts})
 	}
 }
 

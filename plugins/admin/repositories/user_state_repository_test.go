@@ -57,7 +57,7 @@ func TestBunUserStateRepository_UpsertAndRetrieve(t *testing.T) {
 	ctx := context.Background()
 	state := &types.AdminUserState{
 		UserID:         "u1",
-		IsBanned:       true,
+		Banned:         true,
 		BannedAt:       tests.PtrTime(t, 0),
 		BannedReason:   tests.PtrString(t, "reason"),
 		BannedByUserID: tests.PtrString(t, "actor"),
@@ -71,17 +71,17 @@ func TestBunUserStateRepository_UpsertAndRetrieve(t *testing.T) {
 	if err != nil {
 		t.Fatalf("fetch failed: %v", err)
 	}
-	if got == nil || got.UserID != "u1" || !got.IsBanned {
+	if got == nil || got.UserID != "u1" || !got.Banned {
 		t.Fatalf("unexpected state returned: %v", got)
 	}
 
 	// update
-	state.IsBanned = false
+	state.Banned = false
 	if err := repo.Upsert(ctx, state); err != nil {
 		t.Fatalf("update failed: %v", err)
 	}
 	got2, _ := repo.GetByUserID(ctx, "u1")
-	if got2 == nil || got2.IsBanned {
+	if got2 == nil || got2.Banned {
 		t.Fatalf("update did not persist: %v", got2)
 	}
 }
@@ -124,8 +124,8 @@ func TestBunUserStateRepository_GetBanned(t *testing.T) {
 	defer cleanup()
 
 	ctx := context.Background()
-	b1 := &types.AdminUserState{UserID: "b1", IsBanned: true}
-	nb := &types.AdminUserState{UserID: "nb", IsBanned: false}
+	b1 := &types.AdminUserState{UserID: "b1", Banned: true}
+	nb := &types.AdminUserState{UserID: "nb", Banned: false}
 	_ = repo.Upsert(ctx, b1)
 	_ = repo.Upsert(ctx, nb)
 

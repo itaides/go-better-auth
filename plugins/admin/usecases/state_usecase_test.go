@@ -53,11 +53,11 @@ func TestStateUseCase_UpsertUserState(t *testing.T) {
 		// service will check user exists via impersonation repo
 		impRepo.On("UserExists", mock.Anything, "u1").Return(true, nil).Once()
 		userStateRepo.On("Upsert", mock.Anything, mock.MatchedBy(func(s *admintypes.AdminUserState) bool {
-			return s.UserID == "u1" && s.IsBanned
+			return s.UserID == "u1" && s.Banned
 		})).Return(nil).Once()
-		userStateRepo.On("GetByUserID", mock.Anything, "u1").Return(&admintypes.AdminUserState{UserID: "u1", IsBanned: true}, nil).Once()
+		userStateRepo.On("GetByUserID", mock.Anything, "u1").Return(&admintypes.AdminUserState{UserID: "u1", Banned: true}, nil).Once()
 
-		result, err := useCase.UpsertUserState(context.Background(), " u1 ", admintypes.UpsertUserStateRequest{IsBanned: true}, internaltests.PtrString("actor"))
+		result, err := useCase.UpsertUserState(context.Background(), " u1 ", admintypes.UpsertUserStateRequest{Banned: true}, internaltests.PtrString("actor"))
 		assert.NoError(t, err)
 		assert.Equal(t, "u1", result.UserID)
 		impRepo.AssertExpectations(t)
@@ -91,7 +91,7 @@ func TestStateUseCase_GetBannedUserStates(t *testing.T) {
 	t.Parallel()
 
 	useCase, userStateRepo, _, _ := admintests.NewStateUseCaseFixture()
-	userStateRepo.On("GetBanned", mock.Anything).Return([]admintypes.AdminUserState{{UserID: "u1", IsBanned: true}}, nil).Once()
+	userStateRepo.On("GetBanned", mock.Anything).Return([]admintypes.AdminUserState{{UserID: "u1", Banned: true}}, nil).Once()
 
 	list, err := useCase.GetBannedUserStates(context.Background())
 	assert.NoError(t, err)
@@ -227,7 +227,7 @@ func TestStateUseCase_BanAndUnbanUser(t *testing.T) {
 		// service doesn't trim, so repository sees the same value provided
 		impRepo.On("UserExists", mock.Anything, " u1 ").Return(true, nil).Once()
 		userStateRepo.On("Upsert", mock.Anything, mock.Anything).Return(nil).Once()
-		userStateRepo.On("GetByUserID", mock.Anything, " u1 ").Return(&admintypes.AdminUserState{UserID: " u1 ", IsBanned: true}, nil).Once()
+		userStateRepo.On("GetByUserID", mock.Anything, " u1 ").Return(&admintypes.AdminUserState{UserID: " u1 ", Banned: true}, nil).Once()
 		_, err := useCase.BanUser(context.Background(), " u1 ", admintypes.BanUserRequest{}, internaltests.PtrString("actor"))
 		assert.NoError(t, err)
 		impRepo.AssertExpectations(t)
@@ -240,7 +240,7 @@ func TestStateUseCase_BanAndUnbanUser(t *testing.T) {
 		useCase, userStateRepo, _, impRepo := admintests.NewStateUseCaseFixture()
 		impRepo.On("UserExists", mock.Anything, " u1 ").Return(true, nil).Once()
 		userStateRepo.On("Upsert", mock.Anything, mock.Anything).Return(nil).Once()
-		userStateRepo.On("GetByUserID", mock.Anything, " u1 ").Return(&admintypes.AdminUserState{UserID: " u1 ", IsBanned: false}, nil).Once()
+		userStateRepo.On("GetByUserID", mock.Anything, " u1 ").Return(&admintypes.AdminUserState{UserID: " u1 ", Banned: false}, nil).Once()
 		_, err := useCase.UnbanUser(context.Background(), " u1 ")
 		assert.NoError(t, err)
 		impRepo.AssertExpectations(t)

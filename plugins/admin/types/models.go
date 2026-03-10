@@ -30,7 +30,7 @@ type AdminUserState struct {
 	bun.BaseModel `bun:"table:admin_user_states"`
 
 	UserID         string     `json:"user_id" bun:"column:user_id,pk"`
-	IsBanned       bool       `json:"banned" bun:"column:banned"`
+	Banned         bool       `json:"banned" bun:"column:banned"`
 	BannedAt       *time.Time `json:"banned_at" bun:"column:banned_at"`
 	BannedUntil    *time.Time `json:"banned_until" bun:"column:banned_until"`
 	BannedReason   *string    `json:"banned_reason" bun:"column:banned_reason"`
@@ -107,6 +107,14 @@ type CreateAccountRequest struct {
 	Password              *string    `json:"password,omitempty"`
 }
 
+type CreateAccountResponse struct {
+	Account *models.Account `json:"account"`
+}
+
+type GetAccountByIDResponse struct {
+	Account *models.Account `json:"account"`
+}
+
 type UpdateAccountRequest struct {
 	ProviderID            *string    `json:"provider_id,omitempty"`
 	AccountID             *string    `json:"account_id,omitempty"`
@@ -117,14 +125,6 @@ type UpdateAccountRequest struct {
 	RefreshTokenExpiresAt *time.Time `json:"refresh_token_expires_at,omitempty"`
 	Scope                 *string    `json:"scope,omitempty"`
 	Password              *string    `json:"password,omitempty"`
-}
-
-type CreateAccountResponse struct {
-	Account *models.Account `json:"account"`
-}
-
-type GetAccountByIDResponse struct {
-	Account *models.Account `json:"account"`
 }
 
 type UpdateAccountResponse struct {
@@ -148,7 +148,7 @@ type UpsertUserStateResponse struct {
 }
 
 type UpsertUserStateRequest struct {
-	IsBanned     bool       `json:"banned"`
+	Banned       bool       `json:"banned"`
 	BannedUntil  *time.Time `json:"banned_until,omitempty"`
 	BannedReason *string    `json:"banned_reason,omitempty"`
 }

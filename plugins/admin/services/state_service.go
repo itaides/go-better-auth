@@ -34,10 +34,10 @@ func (s *StateService) UpsertUserState(ctx context.Context, userID string, reque
 
 	now := time.Now().UTC()
 	state := &types.AdminUserState{
-		UserID:   userID,
-		IsBanned: request.IsBanned,
+		UserID: userID,
+		Banned: request.Banned,
 	}
-	if request.IsBanned {
+	if request.Banned {
 		state.BannedAt = &now
 		state.BannedUntil = request.BannedUntil
 		state.BannedReason = request.BannedReason
@@ -119,12 +119,12 @@ func (s *StateService) GetRevokedSessionStates(ctx context.Context) ([]types.Adm
 
 func (s *StateService) BanUser(ctx context.Context, userID string, request types.BanUserRequest, actorUserID *string) (*types.AdminUserState, error) {
 	return s.UpsertUserState(ctx, userID, types.UpsertUserStateRequest{
-		IsBanned:     true,
+		Banned:       true,
 		BannedUntil:  request.BannedUntil,
 		BannedReason: request.Reason,
 	}, actorUserID)
 }
 
 func (s *StateService) UnbanUser(ctx context.Context, userID string) (*types.AdminUserState, error) {
-	return s.UpsertUserState(ctx, userID, types.UpsertUserStateRequest{IsBanned: false}, nil)
+	return s.UpsertUserState(ctx, userID, types.UpsertUserStateRequest{Banned: false}, nil)
 }

@@ -166,7 +166,9 @@ func (h *DeleteUserHandler) Handler() http.HandlerFunc {
 			return
 		}
 
-		reqCtx.SetJSONResponse(http.StatusOK, map[string]any{"message": "user deleted"})
+		reqCtx.SetJSONResponse(http.StatusOK, &types.DeleteUserResponse{
+			Message: "user deleted",
+		})
 	}
 }
 
