@@ -52,13 +52,11 @@ func NewVerifyBackupCodeUseCase(
 }
 
 func (uc *verifyBackupCodeUseCase) Verify(ctx context.Context, pendingToken, code string, trustDevice bool, ipAddress, userAgent *string) (*types.VerifyResult, error) {
-	// Resolve userID from pending token
 	userID, verificationID, err := resolvePendingToken(ctx, uc.TokenService, uc.VerificationService, pendingToken)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get totp record
 	record, err := uc.TOTPRepo.GetByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -67,19 +65,16 @@ func (uc *verifyBackupCodeUseCase) Verify(ctx context.Context, pendingToken, cod
 		return nil, constants.ErrTOTPNotEnabled
 	}
 
-	// Unmarshal hashed backup codes
 	var hashedCodes []string
 	if err := json.Unmarshal([]byte(record.BackupCodes), &hashedCodes); err != nil {
 		return nil, err
 	}
 
-	// Verify and consume the backup code
 	remaining, valid := uc.BackupCodeService.VerifyAndConsume(hashedCodes, code)
 	if !valid {
 		return nil, constants.ErrInvalidBackupCode
 	}
 
-	// Update remaining codes in DB
 	remainingJSON, err := json.Marshal(remaining)
 	if err != nil {
 		return nil, err
@@ -88,7 +83,6 @@ func (uc *verifyBackupCodeUseCase) Verify(ctx context.Context, pendingToken, cod
 		return nil, err
 	}
 
-	// Get user
 	user, err := uc.UserService.GetByID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -97,7 +91,6 @@ func (uc *verifyBackupCodeUseCase) Verify(ctx context.Context, pendingToken, cod
 		return nil, constants.ErrUserNotFound
 	}
 
-	// Create session
 	session, token, err := createSessionForUser(ctx, uc.TokenService, uc.SessionService, uc.VerificationService, uc.GlobalConfig, userID, verificationID, ipAddress, userAgent)
 	if err != nil {
 		return nil, err
@@ -109,7 +102,6 @@ func (uc *verifyBackupCodeUseCase) Verify(ctx context.Context, pendingToken, cod
 		SessionToken: token,
 	}
 
-	// Optionally trust device
 	if trustDevice {
 		deviceToken, err := createTrustedDevice(ctx, uc.TokenService, uc.TOTPRepo, uc.Config, userID, userAgent)
 		if err != nil {
@@ -117,11 +109,9 @@ func (uc *verifyBackupCodeUseCase) Verify(ctx context.Context, pendingToken, cod
 		}
 		result.TrustedDeviceToken = deviceToken
 
-		// Publish device trusted event
 		publishEvent(uc.EventBus, uc.Logger, constants.EventTOTPDeviceTrusted, userID)
 	}
 
-	// Publish backup code used event
 	publishEvent(uc.EventBus, uc.Logger, constants.EventTOTPBackupUsed, userID)
 
 	return result, nil

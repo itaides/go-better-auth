@@ -34,12 +34,10 @@ func NewDisableUseCase(
 }
 
 func (uc *disableUseCase) Disable(ctx context.Context, userID, password string) error {
-	// Verify password
 	if err := verifyPassword(ctx, uc.AccountService, uc.PasswordService, userID, password); err != nil {
 		return err
 	}
 
-	// Check that TOTP is enabled
 	existing, err := uc.TOTPRepo.GetByUserID(ctx, userID)
 	if err != nil {
 		return err
@@ -48,17 +46,14 @@ func (uc *disableUseCase) Disable(ctx context.Context, userID, password string) 
 		return constants.ErrTOTPNotEnabled
 	}
 
-	// Delete totp record
 	if err := uc.TOTPRepo.DeleteByUserID(ctx, userID); err != nil {
 		return err
 	}
 
-	// Delete trusted devices
 	if err := uc.TOTPRepo.DeleteTrustedDevicesByUserID(ctx, userID); err != nil {
 		return err
 	}
 
-	// Publish disabled event
 	publishEvent(uc.EventBus, uc.Logger, constants.EventTOTPDisabled, userID)
 
 	return nil

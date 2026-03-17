@@ -21,7 +21,6 @@ func (h *VerifyBackupCodeHandler) Handler() http.HandlerFunc {
 		ctx := r.Context()
 		reqCtx, _ := models.GetRequestContext(ctx)
 
-		// Read pending token from cookie
 		cookie, err := r.Cookie(constants.CookieTOTPPending)
 		if err != nil || cookie.Value == "" {
 			reqCtx.SetJSONResponse(http.StatusUnauthorized, map[string]any{
@@ -56,13 +55,11 @@ func (h *VerifyBackupCodeHandler) Handler() http.HandlerFunc {
 			return
 		}
 
-		// Set session context values
 		reqCtx.SetUserIDInContext(result.User.ID)
 		reqCtx.Values[models.ContextSessionID.String()] = result.Session.ID
 		reqCtx.Values[models.ContextSessionToken.String()] = result.SessionToken
 		reqCtx.Values[models.ContextAuthSuccess.String()] = true
 
-		// Set trusted device cookie if applicable
 		if result.TrustedDeviceToken != "" {
 			http.SetCookie(reqCtx.ResponseWriter, &http.Cookie{
 				Name:     constants.CookieTOTPTrusted,
@@ -75,7 +72,6 @@ func (h *VerifyBackupCodeHandler) Handler() http.HandlerFunc {
 			})
 		}
 
-		// Clear the pending cookie
 		http.SetCookie(reqCtx.ResponseWriter, &http.Cookie{
 			Name:     constants.CookieTOTPPending,
 			Value:    "",

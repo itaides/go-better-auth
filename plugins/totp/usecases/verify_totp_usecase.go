@@ -52,13 +52,11 @@ func NewVerifyTOTPUseCase(
 }
 
 func (uc *verifyTOTPUseCase) Verify(ctx context.Context, pendingToken, code string, trustDevice bool, ipAddress, userAgent *string) (*types.VerifyResult, error) {
-	// Resolve userID from pending token
 	userID, verificationID, err := resolvePendingToken(ctx, uc.TokenService, uc.VerificationService, pendingToken)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get totp record
 	record, err := uc.TOTPRepo.GetByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -67,26 +65,21 @@ func (uc *verifyTOTPUseCase) Verify(ctx context.Context, pendingToken, code stri
 		return nil, constants.ErrTOTPNotEnabled
 	}
 
-	// Decrypt secret
 	secret, err := uc.TokenService.Decrypt(record.Secret)
 	if err != nil {
 		return nil, err
 	}
 
-	// Validate TOTP code
 	if !uc.TOTPService.ValidateCode(secret, code, time.Now().UTC()) {
 		return nil, constants.ErrInvalidTOTPCode
 	}
 
-	// If this is the first successful verification (SkipVerificationOnEnable was false),
-	// enable 2FA on the totp record
 	if !record.Enabled {
 		if err := uc.TOTPRepo.SetEnabled(ctx, userID, true); err != nil {
 			return nil, err
 		}
 	}
 
-	// Get user
 	user, err := uc.UserService.GetByID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -95,7 +88,6 @@ func (uc *verifyTOTPUseCase) Verify(ctx context.Context, pendingToken, code stri
 		return nil, constants.ErrUserNotFound
 	}
 
-	// Create session
 	session, token, err := createSessionForUser(ctx, uc.TokenService, uc.SessionService, uc.VerificationService, uc.GlobalConfig, userID, verificationID, ipAddress, userAgent)
 	if err != nil {
 		return nil, err
@@ -107,7 +99,6 @@ func (uc *verifyTOTPUseCase) Verify(ctx context.Context, pendingToken, code stri
 		SessionToken: token,
 	}
 
-	// Optionally trust device
 	if trustDevice {
 		deviceToken, err := createTrustedDevice(ctx, uc.TokenService, uc.TOTPRepo, uc.Config, userID, userAgent)
 		if err != nil {
@@ -115,11 +106,9 @@ func (uc *verifyTOTPUseCase) Verify(ctx context.Context, pendingToken, code stri
 		}
 		result.TrustedDeviceToken = deviceToken
 
-		// Publish device trusted event
 		publishEvent(uc.EventBus, uc.Logger, constants.EventTOTPDeviceTrusted, userID)
 	}
 
-	// Publish verified event
 	publishEvent(uc.EventBus, uc.Logger, constants.EventTOTPVerified, userID)
 
 	return result, nil

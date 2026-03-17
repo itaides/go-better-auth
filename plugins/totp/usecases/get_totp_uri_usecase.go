@@ -41,12 +41,10 @@ func NewGetTOTPURIUseCase(
 }
 
 func (uc *getTOTPURIUseCase) GetTOTPURI(ctx context.Context, userID, password string) (string, error) {
-	// Verify password
 	if err := verifyPassword(ctx, uc.AccountService, uc.PasswordService, userID, password); err != nil {
 		return "", err
 	}
 
-	// Get totp record
 	record, err := uc.TOTPRepo.GetByUserID(ctx, userID)
 	if err != nil {
 		return "", err
@@ -55,7 +53,6 @@ func (uc *getTOTPURIUseCase) GetTOTPURI(ctx context.Context, userID, password st
 		return "", constants.ErrTOTPNotEnabled
 	}
 
-	// Fetch user to get email
 	user, err := uc.UserService.GetByID(ctx, userID)
 	if err != nil {
 		return "", err
@@ -64,13 +61,11 @@ func (uc *getTOTPURIUseCase) GetTOTPURI(ctx context.Context, userID, password st
 		return "", constants.ErrUserNotFound
 	}
 
-	// Decrypt secret
 	secret, err := uc.TokenService.Decrypt(record.Secret)
 	if err != nil {
 		return "", err
 	}
 
-	// Build URI
 	issuer := uc.Config.Issuer
 	return uc.TOTPService.BuildURI(secret, issuer, user.Email), nil
 }

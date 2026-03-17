@@ -28,12 +28,10 @@ func NewViewBackupCodesUseCase(
 }
 
 func (uc *viewBackupCodesUseCase) View(ctx context.Context, userID, password string) (int, error) {
-	// Verify password
 	if err := verifyPassword(ctx, uc.AccountService, uc.PasswordService, userID, password); err != nil {
 		return 0, err
 	}
 
-	// Get totp record
 	record, err := uc.TOTPRepo.GetByUserID(ctx, userID)
 	if err != nil {
 		return 0, err
@@ -42,7 +40,6 @@ func (uc *viewBackupCodesUseCase) View(ctx context.Context, userID, password str
 		return 0, constants.ErrTOTPNotEnabled
 	}
 
-	// Unmarshal hashed backup codes to count them
 	var hashedCodes []string
 	if err := json.Unmarshal([]byte(record.BackupCodes), &hashedCodes); err != nil {
 		return 0, err

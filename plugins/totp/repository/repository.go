@@ -22,8 +22,6 @@ func (r *TOTPRepository) WithTx(tx bun.IDB) *TOTPRepository {
 	return &TOTPRepository{db: tx}
 }
 
-// --- TOTPRecord operations ---
-
 func (r *TOTPRepository) GetByUserID(ctx context.Context, userID string) (*TOTPRecord, error) {
 	record := new(TOTPRecord)
 	err := r.db.NewSelect().
@@ -80,8 +78,6 @@ func (r *TOTPRepository) DeleteByUserID(ctx context.Context, userID string) erro
 	return err
 }
 
-// --- Enabled operations ---
-
 func (r *TOTPRepository) IsEnabled(ctx context.Context, userID string) (bool, error) {
 	record := new(TOTPRecord)
 	err := r.db.NewSelect().
@@ -108,8 +104,6 @@ func (r *TOTPRepository) SetEnabled(ctx context.Context, userID string, enabled 
 		Exec(ctx)
 	return err
 }
-
-// --- TrustedDevice operations ---
 
 func (r *TOTPRepository) GetTrustedDeviceByToken(ctx context.Context, token string) (*TrustedDevice, error) {
 	device := new(TrustedDevice)

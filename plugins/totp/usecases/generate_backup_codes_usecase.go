@@ -32,12 +32,10 @@ func NewGenerateBackupCodesUseCase(
 }
 
 func (uc *generateBackupCodesUseCase) Generate(ctx context.Context, userID, password string) ([]string, error) {
-	// Verify password
 	if err := verifyPassword(ctx, uc.AccountService, uc.PasswordService, userID, password); err != nil {
 		return nil, err
 	}
 
-	// Check that 2FA is enabled
 	existing, err := uc.TOTPRepo.GetByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -46,13 +44,11 @@ func (uc *generateBackupCodesUseCase) Generate(ctx context.Context, userID, pass
 		return nil, constants.ErrTOTPNotEnabled
 	}
 
-	// Generate new backup codes
 	codes, err := uc.BackupCodeService.Generate()
 	if err != nil {
 		return nil, err
 	}
 
-	// Hash and update in DB
 	hashedCodes, err := uc.BackupCodeService.HashCodes(codes)
 	if err != nil {
 		return nil, err

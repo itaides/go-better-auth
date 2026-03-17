@@ -42,9 +42,6 @@ func (c *TOTPPluginConfig) ApplyDefaults() {
 	}
 }
 
-// ParseSameSite converts a string to http.SameSite.
-// Accepted values: "strict", "lax", "none" (case-insensitive).
-// Defaults to http.SameSiteLaxMode for unrecognized values.
 func ParseSameSite(s string) http.SameSite {
 	switch strings.ToLower(s) {
 	case "strict":
@@ -132,5 +129,5 @@ type VerifyResult struct {
 	User               *models.User
 	Session            *models.Session
 	SessionToken       string
-	TrustedDeviceToken string // empty if not trusting
+	TrustedDeviceToken string // empty if not issued
 }
