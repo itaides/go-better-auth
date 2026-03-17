@@ -1,0 +1,69 @@
+package usecases
+
+import (
+	"context"
+	"encoding/json"
+
+	"github.com/GoBetterAuth/go-better-auth/v2/plugins/totp/constants"
+	"github.com/GoBetterAuth/go-better-auth/v2/plugins/totp/repository"
+	"github.com/GoBetterAuth/go-better-auth/v2/plugins/totp/services"
+	rootservices "github.com/GoBetterAuth/go-better-auth/v2/services"
+)
+
+type generateBackupCodesUseCase struct {
+	AccountService    rootservices.AccountService
+	PasswordService   rootservices.PasswordService
+	BackupCodeService *services.BackupCodeService
+	TOTPRepo          *repository.TOTPRepository
+}
+
+func NewGenerateBackupCodesUseCase(
+	accountService rootservices.AccountService,
+	passwordService rootservices.PasswordService,
+	backupCodeService *services.BackupCodeService,
+	totpRepo *repository.TOTPRepository,
+) GenerateBackupCodesUseCase {
+	return &generateBackupCodesUseCase{
+		AccountService:    accountService,
+		PasswordService:   passwordService,
+		BackupCodeService: backupCodeService,
+		TOTPRepo:          totpRepo,
+	}
+}
+
+func (uc *generateBackupCodesUseCase) Generate(ctx context.Context, userID, password string) ([]string, error) {
+	// Verify password
+	if err := verifyPassword(ctx, uc.AccountService, uc.PasswordService, userID, password); err != nil {
+		return nil, err
+	}
+
+	// Check that 2FA is enabled
+	existing, err := uc.TOTPRepo.GetByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil {
+		return nil, constants.ErrTOTPNotEnabled
+	}
+
+	// Generate new backup codes
+	codes, err := uc.BackupCodeService.Generate()
+	if err != nil {
+		return nil, err
+	}
+
+	// Hash and update in DB
+	hashedCodes, err := uc.BackupCodeService.HashCodes(codes)
+	if err != nil {
+		return nil, err
+	}
+	hashedJSON, err := json.Marshal(hashedCodes)
+	if err != nil {
+		return nil, err
+	}
+	if err := uc.TOTPRepo.UpdateBackupCodes(ctx, userID, string(hashedJSON)); err != nil {
+		return nil, err
+	}
+
+	return codes, nil
+}
