@@ -8,9 +8,13 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"math"
 	"net/url"
 	"time"
+)
+
+const (
+	// The divisor for 6 digits (10^6)
+	totpDivisor = 1_000_000
 )
 
 type TOTPService struct {
@@ -70,16 +74,23 @@ func (s *TOTPService) BuildURI(secret, issuer, email string) string {
 
 // hotp computes HOTP per RFC 4226.
 func (s *TOTPService) hotp(key []byte, counter uint64) string {
-	buf := make([]byte, 8)
-	binary.BigEndian.PutUint64(buf, counter)
+	var buf [8]byte
+	binary.BigEndian.PutUint64(buf[:], counter)
 
+	// Use SHA-1 for universal compatibility
 	mac := hmac.New(sha1.New, key)
-	mac.Write(buf)
+	mac.Write(buf[:])
 	sum := mac.Sum(nil)
 
-	offset := sum[len(sum)-1] & 0x0f
-	code := binary.BigEndian.Uint32(sum[offset:offset+4]) & 0x7fffffff
-	code = code % uint32(math.Pow10(s.Digits))
+	// Dynamic Truncation
+	offset := sum[len(sum)-1] & 0xf
 
-	return fmt.Sprintf("%0*d", s.Digits, code)
+	code := (uint32(sum[offset])&0x7f)<<24 |
+		(uint32(sum[offset+1])&0xff)<<16 |
+		(uint32(sum[offset+2])&0xff)<<8 |
+		(uint32(sum[offset+3]) & 0xff)
+
+	code = code % totpDivisor
+
+	return fmt.Sprintf("%06d", code)
 }

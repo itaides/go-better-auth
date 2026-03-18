@@ -95,20 +95,17 @@ func (p *TOTPPlugin) Init(ctx *models.PluginContext) error {
 	}
 	p.passwordService = passwordService
 
-	// Create domain services
 	p.totpService = &services.TOTPService{
-		Digits:        p.pluginConfig.Digits,
-		PeriodSeconds: p.pluginConfig.PeriodSeconds,
+		Digits:        6,
+		PeriodSeconds: 30,
 	}
 	p.backupCodeService = &services.BackupCodeService{
 		Count:           p.pluginConfig.BackupCodeCount,
 		PasswordService: p.passwordService,
 	}
 
-	// Create repository
 	p.totpRepo = repository.NewTOTPRepository(ctx.DB)
 
-	// Build API
 	p.Api = BuildAPI(p)
 
 	return nil
