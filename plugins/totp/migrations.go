@@ -28,7 +28,7 @@ func totpMigrationsForProvider(provider string) []migrations.Migration {
 
 func totpSQLiteInitial() migrations.Migration {
 	return migrations.Migration{
-		Version: "20260304000000_totp_initial",
+		Version: "20260318000000_totp_initial",
 		Up: func(ctx context.Context, tx bun.Tx) error {
 			return migrations.ExecStatements(
 				ctx,
@@ -71,7 +71,7 @@ func totpSQLiteInitial() migrations.Migration {
 
 func totpPostgresInitial() migrations.Migration {
 	return migrations.Migration{
-		Version: "20260304000000_totp_initial",
+		Version: "20260318000000_totp_initial",
 		Up: func(ctx context.Context, tx bun.Tx) error {
 			return migrations.ExecStatements(
 				ctx,
@@ -126,7 +126,7 @@ func totpPostgresInitial() migrations.Migration {
 
 func totpMySQLInitial() migrations.Migration {
 	return migrations.Migration{
-		Version: "20260304000000_totp_initial",
+		Version: "20260318000000_totp_initial",
 		Up: func(ctx context.Context, tx bun.Tx) error {
 			return migrations.ExecStatements(
 				ctx,
