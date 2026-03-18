@@ -22,8 +22,6 @@ func BuildUseCases(p *TOTPPlugin) *usecases.UseCases {
 	return &usecases.UseCases{
 		Enable: usecases.NewEnableUseCase(
 			p.userService,
-			p.accountService,
-			p.passwordService,
 			p.tokenService,
 			p.verificationService,
 			p.totpService,
@@ -34,20 +32,16 @@ func BuildUseCases(p *TOTPPlugin) *usecases.UseCases {
 			p.logger,
 		),
 		Disable: usecases.NewDisableUseCase(
-			p.accountService,
-			p.passwordService,
-			p.totpRepo,
-			p.ctx.EventBus,
 			p.logger,
+			p.ctx.EventBus,
+			p.totpRepo,
 		),
 		GetTOTPURI: usecases.NewGetTOTPURIUseCase(
+			p.pluginConfig,
 			p.userService,
-			p.accountService,
-			p.passwordService,
 			p.tokenService,
 			p.totpService,
 			p.totpRepo,
-			p.pluginConfig,
 		),
 		VerifyTOTP: usecases.NewVerifyTOTPUseCase(
 			p.globalConfig,
@@ -62,8 +56,6 @@ func BuildUseCases(p *TOTPPlugin) *usecases.UseCases {
 			p.totpRepo,
 		),
 		GenerateBackupCodes: usecases.NewGenerateBackupCodesUseCase(
-			p.accountService,
-			p.passwordService,
 			p.backupCodeService,
 			p.totpRepo,
 		),
@@ -80,8 +72,6 @@ func BuildUseCases(p *TOTPPlugin) *usecases.UseCases {
 			p.totpRepo,
 		),
 		ViewBackupCodes: usecases.NewViewBackupCodesUseCase(
-			p.accountService,
-			p.passwordService,
 			p.totpRepo,
 		),
 	}

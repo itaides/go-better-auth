@@ -6,35 +6,24 @@ import (
 
 	"github.com/GoBetterAuth/go-better-auth/v2/plugins/totp/constants"
 	"github.com/GoBetterAuth/go-better-auth/v2/plugins/totp/services"
-	rootservices "github.com/GoBetterAuth/go-better-auth/v2/services"
 )
 
 type GenerateBackupCodesUseCase struct {
-	AccountService    rootservices.AccountService
-	PasswordService   rootservices.PasswordService
 	BackupCodeService *services.BackupCodeService
 	TOTPRepo          TOTPRepository
 }
 
 func NewGenerateBackupCodesUseCase(
-	accountService rootservices.AccountService,
-	passwordService rootservices.PasswordService,
 	backupCodeService *services.BackupCodeService,
 	totpRepo TOTPRepository,
 ) *GenerateBackupCodesUseCase {
 	return &GenerateBackupCodesUseCase{
-		AccountService:    accountService,
-		PasswordService:   passwordService,
 		BackupCodeService: backupCodeService,
 		TOTPRepo:          totpRepo,
 	}
 }
 
-func (uc *GenerateBackupCodesUseCase) Generate(ctx context.Context, userID string, password string) ([]string, error) {
-	if err := verifyPassword(ctx, uc.AccountService, uc.PasswordService, userID, password); err != nil {
-		return nil, err
-	}
-
+func (uc *GenerateBackupCodesUseCase) Generate(ctx context.Context, userID string) ([]string, error) {
 	existing, err := uc.TOTPRepo.GetByUserID(ctx, userID)
 	if err != nil {
 		return nil, err

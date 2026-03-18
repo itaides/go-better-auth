@@ -99,7 +99,7 @@ func (uc *VerifyTOTPUseCase) Verify(ctx context.Context, pendingToken, code stri
 	}
 
 	if trustDevice {
-		deviceToken, err := createTrustedDevice(ctx, uc.TokenService, uc.TOTPRepo, uc.Config, userID, userAgent)
+		deviceToken, err := createTrustedDevice(ctx, uc.Config, userID, userAgent, uc.TokenService, uc.TOTPRepo)
 		if err != nil {
 			return nil, err
 		}

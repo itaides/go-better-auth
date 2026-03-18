@@ -27,7 +27,9 @@ func (p *TOTPPlugin) buildHooks() []models.Hook {
 			PluginID: HookIDTOTPIntercept.String(),
 			Matcher:  p.signInSuccessMatcher,
 			Handler:  p.interceptSignInHook,
-			Order:    1, // Must run before session (5) and JWT (10) hooks to intercept auth
+			// Must run before hooks that set auth cookies/sessions/tokens to intercept before those are set
+			// preventing them from being issued until after TOTP verification.
+			Order: 5,
 		},
 	}
 }
@@ -38,8 +40,10 @@ func (p *TOTPPlugin) signInSuccessMatcher(reqCtx *models.RequestContext) bool {
 }
 
 func (p *TOTPPlugin) interceptSignInHook(reqCtx *models.RequestContext) error {
+	ctx := reqCtx.Request.Context()
+
 	// Skip totp verify routes to avoid intercepting our own auth success
-	if strings.Contains(reqCtx.Request.URL.Path, "/totp/verify") {
+	if strings.Contains(reqCtx.Path, "/totp/verify") {
 		return nil
 	}
 
@@ -48,8 +52,7 @@ func (p *TOTPPlugin) interceptSignInHook(reqCtx *models.RequestContext) error {
 	}
 	userID := *reqCtx.UserID
 
-	// Check if user has 2FA enabled via the totp table
-	enabled, err := p.totpRepo.IsEnabled(reqCtx.Request.Context(), userID)
+	enabled, err := p.totpRepo.IsEnabled(ctx, userID)
 	if err != nil {
 		p.logger.Error("failed to check totp status", map[string]any{"error": err.Error(), "user_id": userID})
 		reqCtx.SetJSONResponse(http.StatusServiceUnavailable, map[string]any{
@@ -59,15 +62,13 @@ func (p *TOTPPlugin) interceptSignInHook(reqCtx *models.RequestContext) error {
 		return nil
 	}
 	if !enabled {
-		return nil // No 2FA, pass through
+		return nil // TOTP not enabled, pass through
 	}
 
-	// Check for trusted device cookie
 	if p.hasTrustedDevice(reqCtx, userID) {
 		return nil // Trusted device, pass through
 	}
 
-	// Create pending verification token
 	token, err := p.tokenService.Generate()
 	if err != nil {
 		p.logger.Error("failed to generate pending token", map[string]any{"error": err.Error()})
@@ -80,11 +81,11 @@ func (p *TOTPPlugin) interceptSignInHook(reqCtx *models.RequestContext) error {
 	hashedToken := p.tokenService.Hash(token)
 
 	_, err = p.verificationService.Create(
-		reqCtx.Request.Context(),
+		ctx,
 		userID,
 		hashedToken,
 		models.TypeTOTPPendingAuth,
-		userID, // identifier
+		userID,
 		p.pluginConfig.PendingTokenExpiry,
 	)
 	if err != nil {
@@ -96,7 +97,6 @@ func (p *TOTPPlugin) interceptSignInHook(reqCtx *models.RequestContext) error {
 		return nil
 	}
 
-	// Set pending token cookie
 	http.SetCookie(reqCtx.ResponseWriter, &http.Cookie{
 		Name:     constants.CookieTOTPPending,
 		Value:    token,
@@ -112,22 +112,23 @@ func (p *TOTPPlugin) interceptSignInHook(reqCtx *models.RequestContext) error {
 	delete(reqCtx.Values, models.ContextSessionToken.String())
 	delete(reqCtx.Values, models.ContextAuthSuccess.String())
 
-	// Replace response with totpRedirect
-	reqCtx.SetJSONResponse(http.StatusOK, map[string]any{
-		"totpRedirect": true,
+	reqCtx.SetJSONResponse(http.StatusOK, &types.TOTPRedirectResponse{
+		TOTPRedirect: true,
 	})
 
 	return nil
 }
 
 func (p *TOTPPlugin) hasTrustedDevice(reqCtx *models.RequestContext, userID string) bool {
+	ctx := reqCtx.Request.Context()
+
 	cookie, err := reqCtx.Request.Cookie(constants.CookieTOTPTrusted)
 	if err != nil || cookie.Value == "" {
 		return false
 	}
 
 	hashedToken := p.tokenService.Hash(cookie.Value)
-	device, err := p.totpRepo.GetTrustedDeviceByToken(reqCtx.Request.Context(), hashedToken)
+	device, err := p.totpRepo.GetTrustedDeviceByToken(ctx, hashedToken)
 	if err != nil || device == nil {
 		return false
 	}
@@ -141,7 +142,7 @@ func (p *TOTPPlugin) hasTrustedDevice(reqCtx *models.RequestContext, userID stri
 	}
 
 	newExpiry := time.Now().UTC().Add(p.pluginConfig.TrustedDeviceDuration)
-	_ = p.totpRepo.RefreshTrustedDevice(reqCtx.Request.Context(), hashedToken, newExpiry)
+	_ = p.totpRepo.RefreshTrustedDevice(ctx, hashedToken, newExpiry)
 
 	return true
 }

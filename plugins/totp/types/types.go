@@ -57,16 +57,7 @@ func ParseSameSite(s string) http.SameSite {
 
 // Request payloads
 type EnableRequest struct {
-	Password string `json:"password"`
-	Issuer   string `json:"issuer,omitempty"`
-}
-
-type DisableRequest struct {
-	Password string `json:"password"`
-}
-
-type GetTOTPURIRequest struct {
-	Password string `json:"password"`
+	Issuer string `json:"issuer,omitempty"`
 }
 
 type VerifyTOTPRequest struct {
@@ -77,14 +68,6 @@ type VerifyTOTPRequest struct {
 type VerifyBackupCodeRequest struct {
 	Code        string `json:"code"`
 	TrustDevice bool   `json:"trust_device,omitempty"`
-}
-
-type GenerateBackupCodesRequest struct {
-	Password string `json:"password"`
-}
-
-type ViewBackupCodesRequest struct {
-	Password string `json:"password"`
 }
 
 // Response payloads

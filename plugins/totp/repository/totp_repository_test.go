@@ -5,21 +5,16 @@ import (
 	"database/sql"
 	"testing"
 
-	"github.com/GoBetterAuth/go-better-auth/v2/migrations"
-	totpplugin "github.com/GoBetterAuth/go-better-auth/v2/plugins/totp"
-	"github.com/GoBetterAuth/go-better-auth/v2/plugins/totp/repository"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
+
+	internaltests "github.com/GoBetterAuth/go-better-auth/v2/internal/tests"
+	"github.com/GoBetterAuth/go-better-auth/v2/migrations"
+	totpplugin "github.com/GoBetterAuth/go-better-auth/v2/plugins/totp"
+	"github.com/GoBetterAuth/go-better-auth/v2/plugins/totp/repository"
 )
-
-type testLogger struct{}
-
-func (testLogger) Debug(msg string, args ...any) {}
-func (testLogger) Info(msg string, args ...any)  {}
-func (testLogger) Warn(msg string, args ...any)  {}
-func (testLogger) Error(msg string, args ...any) {}
 
 func newTestTOTPDB(t *testing.T) *bun.DB {
 	t.Helper()
@@ -32,7 +27,7 @@ func newTestTOTPDB(t *testing.T) *bun.DB {
 	t.Cleanup(func() { _ = db.Close() })
 
 	ctx := context.Background()
-	migrator, err := migrations.NewMigrator(db, testLogger{})
+	migrator, err := migrations.NewMigrator(db, &internaltests.MockLogger{})
 	require.NoError(t, err)
 
 	coreSet, err := migrations.CoreMigrationSet("sqlite")

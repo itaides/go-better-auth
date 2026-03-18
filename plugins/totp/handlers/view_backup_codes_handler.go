@@ -3,7 +3,6 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/GoBetterAuth/go-better-auth/v2/internal/util"
 	"github.com/GoBetterAuth/go-better-auth/v2/models"
 	"github.com/GoBetterAuth/go-better-auth/v2/plugins/totp/types"
 	"github.com/GoBetterAuth/go-better-auth/v2/plugins/totp/usecases"
@@ -18,7 +17,8 @@ func (h *ViewBackupCodesHandler) Handler() http.HandlerFunc {
 		ctx := r.Context()
 		reqCtx, _ := models.GetRequestContext(ctx)
 
-		if reqCtx.UserID == nil || *reqCtx.UserID == "" {
+		userID, ok := models.GetUserIDFromContext(ctx)
+		if !ok {
 			reqCtx.SetJSONResponse(http.StatusUnauthorized, map[string]any{
 				"message": "authentication required",
 			})
@@ -26,16 +26,7 @@ func (h *ViewBackupCodesHandler) Handler() http.HandlerFunc {
 			return
 		}
 
-		var payload types.ViewBackupCodesRequest
-		if err := util.ParseJSON(r, &payload); err != nil {
-			reqCtx.SetJSONResponse(http.StatusUnprocessableEntity, map[string]any{
-				"message": "invalid request body",
-			})
-			reqCtx.Handled = true
-			return
-		}
-
-		count, err := h.UseCase.View(ctx, *reqCtx.UserID, payload.Password)
+		count, err := h.UseCase.View(ctx, userID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusBadRequest, map[string]any{
 				"message": err.Error(),

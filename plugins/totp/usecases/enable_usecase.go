@@ -13,8 +13,6 @@ import (
 
 type EnableUseCase struct {
 	UserService       rootservices.UserService
-	AccountService    rootservices.AccountService
-	PasswordService   rootservices.PasswordService
 	TokenService      rootservices.TokenService
 	Verification      rootservices.VerificationService
 	TOTPService       *services.TOTPService
@@ -27,8 +25,6 @@ type EnableUseCase struct {
 
 func NewEnableUseCase(
 	userService rootservices.UserService,
-	accountService rootservices.AccountService,
-	passwordService rootservices.PasswordService,
 	tokenService rootservices.TokenService,
 	verificationService rootservices.VerificationService,
 	totpService *services.TOTPService,
@@ -40,8 +36,6 @@ func NewEnableUseCase(
 ) *EnableUseCase {
 	return &EnableUseCase{
 		UserService:       userService,
-		AccountService:    accountService,
-		PasswordService:   passwordService,
 		TokenService:      tokenService,
 		Verification:      verificationService,
 		TOTPService:       totpService,
@@ -53,11 +47,7 @@ func NewEnableUseCase(
 	}
 }
 
-func (uc *EnableUseCase) Enable(ctx context.Context, userID, password, issuer string) (*types.EnableResult, error) {
-	if err := verifyPassword(ctx, uc.AccountService, uc.PasswordService, userID, password); err != nil {
-		return nil, err
-	}
-
+func (uc *EnableUseCase) Enable(ctx context.Context, userID, issuer string) (*types.EnableResult, error) {
 	existing, err := uc.TOTPRepo.GetByUserID(ctx, userID)
 	if err != nil {
 		return nil, err

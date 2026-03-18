@@ -30,65 +30,101 @@ func newReqCtx(t *testing.T, method, path string, body []byte, userID *string) (
 	return req, reqCtx, w
 }
 
-func TestEnableHandler_Unauthenticated(t *testing.T) {
-	h := &EnableHandler{}
-	req, reqCtx, w := newReqCtx(t, http.MethodPost, "/totp/enable", []byte(`{"password":"x"}`), nil)
-	h.Handler().ServeHTTP(w, req)
-	assert.Equal(t, http.StatusUnauthorized, reqCtx.ResponseStatus)
+func TestEnableHandler(t *testing.T) {
+	t.Parallel()
+
+	t.Run("unauthenticated", func(t *testing.T) {
+		t.Parallel()
+
+		h := &EnableHandler{}
+		req, reqCtx, w := newReqCtx(t, http.MethodPost, "/totp/enable", nil, nil)
+		h.Handler().ServeHTTP(w, req)
+		assert.Equal(t, http.StatusUnauthorized, reqCtx.ResponseStatus)
+	})
+
+	t.Run("invalid_body", func(t *testing.T) {
+		t.Parallel()
+
+		uid := "u1"
+		h := &EnableHandler{}
+		req, reqCtx, w := newReqCtx(t, http.MethodPost, "/totp/enable", []byte("not-json"), &uid)
+		h.Handler().ServeHTTP(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, reqCtx.ResponseStatus)
+	})
 }
 
-func TestEnableHandler_InvalidBody(t *testing.T) {
-	uid := "u1"
-	h := &EnableHandler{}
-	req, reqCtx, w := newReqCtx(t, http.MethodPost, "/totp/enable", []byte("not-json"), &uid)
-	h.Handler().ServeHTTP(w, req)
-	assert.Equal(t, http.StatusUnprocessableEntity, reqCtx.ResponseStatus)
+func TestDisableHandler(t *testing.T) {
+	t.Parallel()
+
+	t.Run("unauthenticated", func(t *testing.T) {
+		t.Parallel()
+
+		h := &DisableHandler{}
+		req, reqCtx, w := newReqCtx(t, http.MethodPost, "/totp/disable", nil, nil)
+		h.Handler().ServeHTTP(w, req)
+		assert.Equal(t, http.StatusUnauthorized, reqCtx.ResponseStatus)
+	})
 }
 
-func TestDisableHandler_Unauthenticated(t *testing.T) {
-	h := &DisableHandler{}
-	req, reqCtx, w := newReqCtx(t, http.MethodPost, "/totp/disable", []byte(`{"password":"x"}`), nil)
-	h.Handler().ServeHTTP(w, req)
-	assert.Equal(t, http.StatusUnauthorized, reqCtx.ResponseStatus)
+func TestGetTOTPURIHandler(t *testing.T) {
+	t.Parallel()
+
+	t.Run("unauthenticated", func(t *testing.T) {
+		t.Parallel()
+
+		h := &GetTOTPURIHandler{}
+		req, reqCtx, w := newReqCtx(t, http.MethodPost, "/totp/get-uri", nil, nil)
+		h.Handler().ServeHTTP(w, req)
+		assert.Equal(t, http.StatusUnauthorized, reqCtx.ResponseStatus)
+	})
 }
 
-func TestGetTOTPURIHandler_Unauthenticated(t *testing.T) {
-	h := &GetTOTPURIHandler{}
-	req, reqCtx, w := newReqCtx(t, http.MethodPost, "/totp/get-uri", []byte(`{"password":"x"}`), nil)
-	h.Handler().ServeHTTP(w, req)
-	assert.Equal(t, http.StatusUnauthorized, reqCtx.ResponseStatus)
+func TestVerifyTOTPHandler(t *testing.T) {
+	t.Parallel()
+
+	t.Run("missing_pending_cookie", func(t *testing.T) {
+		t.Parallel()
+
+		uid := "u1"
+		h := &VerifyTOTPHandler{PluginConfig: &types.TOTPPluginConfig{}}
+		req, reqCtx, w := newReqCtx(t, http.MethodPost, "/totp/verify", []byte(`{"code":"123456"}`), &uid)
+		h.Handler().ServeHTTP(w, req)
+		assert.Equal(t, http.StatusUnauthorized, reqCtx.ResponseStatus)
+	})
+
+	t.Run("invalid_body", func(t *testing.T) {
+		t.Parallel()
+
+		uid := "u1"
+		h := &VerifyTOTPHandler{PluginConfig: &types.TOTPPluginConfig{}}
+		req, reqCtx, w := newReqCtx(t, http.MethodPost, "/totp/verify", []byte("bad"), &uid)
+		req.AddCookie(&http.Cookie{Name: "totp_pending", Value: "token"})
+		h.Handler().ServeHTTP(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, reqCtx.ResponseStatus)
+	})
 }
 
-func TestVerifyTOTPHandler_MissingPendingCookie(t *testing.T) {
-	h := &VerifyTOTPHandler{PluginConfig: &types.TOTPPluginConfig{}}
-	uid := "u1"
-	req, reqCtx, w := newReqCtx(t, http.MethodPost, "/totp/verify", []byte(`{"code":"123456"}`), &uid)
-	h.Handler().ServeHTTP(w, req)
-	assert.Equal(t, http.StatusUnauthorized, reqCtx.ResponseStatus)
-}
+func TestVerifyBackupCodeHandler(t *testing.T) {
+	t.Parallel()
 
-func TestVerifyTOTPHandler_InvalidBody(t *testing.T) {
-	h := &VerifyTOTPHandler{PluginConfig: &types.TOTPPluginConfig{}}
-	uid := "u1"
-	req, reqCtx, w := newReqCtx(t, http.MethodPost, "/totp/verify", []byte("bad"), &uid)
-	req.AddCookie(&http.Cookie{Name: "totp_pending", Value: "token"})
-	h.Handler().ServeHTTP(w, req)
-	assert.Equal(t, http.StatusUnprocessableEntity, reqCtx.ResponseStatus)
-}
+	t.Run("missing_pending_cookie", func(t *testing.T) {
+		t.Parallel()
 
-func TestVerifyBackupCodeHandler_MissingPendingCookie(t *testing.T) {
-	h := &VerifyBackupCodeHandler{PluginConfig: &types.TOTPPluginConfig{}}
-	uid := "u1"
-	req, reqCtx, w := newReqCtx(t, http.MethodPost, "/totp/verify-backup-code", []byte(`{"code":"abc"}`), &uid)
-	h.Handler().ServeHTTP(w, req)
-	assert.Equal(t, http.StatusUnauthorized, reqCtx.ResponseStatus)
-}
+		uid := "u1"
+		h := &VerifyBackupCodeHandler{PluginConfig: &types.TOTPPluginConfig{}}
+		req, reqCtx, w := newReqCtx(t, http.MethodPost, "/totp/verify-backup-code", []byte(`{"code":"abc"}`), &uid)
+		h.Handler().ServeHTTP(w, req)
+		assert.Equal(t, http.StatusUnauthorized, reqCtx.ResponseStatus)
+	})
 
-func TestVerifyBackupCodeHandler_InvalidBody(t *testing.T) {
-	h := &VerifyBackupCodeHandler{PluginConfig: &types.TOTPPluginConfig{}}
-	uid := "u1"
-	req, reqCtx, w := newReqCtx(t, http.MethodPost, "/totp/verify-backup-code", []byte("bad"), &uid)
-	req.AddCookie(&http.Cookie{Name: "totp_pending", Value: "token"})
-	h.Handler().ServeHTTP(w, req)
-	assert.Equal(t, http.StatusUnprocessableEntity, reqCtx.ResponseStatus)
+	t.Run("invalid_body", func(t *testing.T) {
+		t.Parallel()
+
+		uid := "u1"
+		h := &VerifyBackupCodeHandler{PluginConfig: &types.TOTPPluginConfig{}}
+		req, reqCtx, w := newReqCtx(t, http.MethodPost, "/totp/verify-backup-code", []byte("bad"), &uid)
+		req.AddCookie(&http.Cookie{Name: "totp_pending", Value: "token"})
+		h.Handler().ServeHTTP(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, reqCtx.ResponseStatus)
+	})
 }
