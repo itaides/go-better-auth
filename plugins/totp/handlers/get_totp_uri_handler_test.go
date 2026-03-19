@@ -24,11 +24,11 @@ type GetTOTPURIHandlerSuite struct {
 }
 
 type getTOTPURIFixture struct {
-	repo     *totptests.MockTOTPRepo
+	config   *types.TOTPPluginConfig
 	userSvc  *internaltests.MockUserService
 	tokenSvc *internaltests.MockTokenService
-	config   *types.TOTPPluginConfig
 	totpSvc  *services.TOTPService
+	repo     *totptests.MockTOTPRepo
 }
 
 type getTOTPURITestCase struct {
@@ -89,14 +89,13 @@ func (s *GetTOTPURIHandlerSuite) TestGetTOTPURIHandler_Table() {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		s.Run(tt.name, func() {
 			t := s.T()
 			m := &getTOTPURIFixture{
 				repo:     &totptests.MockTOTPRepo{},
 				userSvc:  &internaltests.MockUserService{},
 				tokenSvc: &internaltests.MockTokenService{},
-				config:   &types.TOTPPluginConfig{Issuer: "TestApp"},
+				config:   &types.TOTPPluginConfig{},
 				totpSvc:  services.NewTOTPService(6, 30),
 			}
 
@@ -105,7 +104,7 @@ func (s *GetTOTPURIHandlerSuite) TestGetTOTPURIHandler_Table() {
 			}
 
 			uc := usecases.NewGetTOTPURIUseCase(m.config, m.userSvc, m.tokenSvc, m.totpSvc, m.repo)
-			h := &GetTOTPURIHandler{UseCase: uc}
+			h := &GetTOTPURIHandler{GlobalConfig: &models.Config{AppName: "MyApp"}, UseCase: uc}
 
 			req, w, reqCtx := internaltests.NewHandlerRequest(t, http.MethodGet, "/totp/get-uri", nil, tt.userID)
 			h.Handler().ServeHTTP(w, req)

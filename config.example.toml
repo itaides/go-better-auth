@@ -343,7 +343,6 @@ enabled = true
 
 # [plugins.totp]
 # enabled = true
-# issuer = "GoBetterAuth"
 # skip_verification_on_enable = false
 # backup_code_count = 10
 # trusted_device_duration = "720h"

@@ -12,8 +12,8 @@ import (
 )
 
 type VerifyTOTPHandler struct {
-	UseCase      *usecases.VerifyTOTPUseCase
 	PluginConfig *types.TOTPPluginConfig
+	UseCase      *usecases.VerifyTOTPUseCase
 }
 
 func (h *VerifyTOTPHandler) Handler() http.HandlerFunc {

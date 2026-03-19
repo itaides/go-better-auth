@@ -96,7 +96,7 @@ func TestGetTOTPURIUseCase(t *testing.T) {
 			}
 
 			uc := NewGetTOTPURIUseCase(f.config, f.userSvc, f.tokenSvc, f.totpSvc, f.totpRepo)
-			uri, err := uc.GetTOTPURI(context.Background(), tc.userID)
+			uri, err := uc.GetTOTPURI(context.Background(), tc.userID, "MyApp")
 			tc.assert(t, uri, err, f)
 		})
 	}

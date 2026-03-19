@@ -12,15 +12,15 @@ import (
 )
 
 type EnableUseCase struct {
+	Config            *types.TOTPPluginConfig
+	Logger            models.Logger
+	EventBus          models.EventBus
 	UserService       rootservices.UserService
 	TokenService      rootservices.TokenService
 	Verification      rootservices.VerificationService
 	TOTPService       *services.TOTPService
 	BackupCodeService *services.BackupCodeService
 	TOTPRepo          TOTPRepository
-	Config            *types.TOTPPluginConfig
-	EventBus          models.EventBus
-	Logger            models.Logger
 }
 
 func NewEnableUseCase(
@@ -35,19 +35,19 @@ func NewEnableUseCase(
 	totpRepo TOTPRepository,
 ) *EnableUseCase {
 	return &EnableUseCase{
+		Config:            config,
+		Logger:            logger,
+		EventBus:          eventBus,
 		UserService:       userService,
 		TokenService:      tokenService,
 		Verification:      verificationService,
 		TOTPService:       totpService,
 		BackupCodeService: backupCodeService,
 		TOTPRepo:          totpRepo,
-		Config:            config,
-		EventBus:          eventBus,
-		Logger:            logger,
 	}
 }
 
-func (uc *EnableUseCase) Enable(ctx context.Context, userID, issuer string) (*types.EnableResult, error) {
+func (uc *EnableUseCase) Enable(ctx context.Context, userID string, issuer string) (*types.EnableResult, error) {
 	existing, err := uc.TOTPRepo.GetByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -123,9 +123,6 @@ func (uc *EnableUseCase) Enable(ctx context.Context, userID, issuer string) (*ty
 		result.PendingToken = token
 	}
 
-	if issuer == "" {
-		issuer = uc.Config.Issuer
-	}
 	totpURI := uc.TOTPService.BuildURI(secret, issuer, user.Email)
 
 	publishEvent(uc.EventBus, uc.Logger, constants.EventTOTPEnabled, userID)

@@ -33,7 +33,7 @@ func NewGetTOTPURIUseCase(
 	}
 }
 
-func (uc *GetTOTPURIUseCase) GetTOTPURI(ctx context.Context, userID string) (string, error) {
+func (uc *GetTOTPURIUseCase) GetTOTPURI(ctx context.Context, userID string, issuer string) (string, error) {
 	record, err := uc.TOTPRepo.GetByUserID(ctx, userID)
 	if err != nil {
 		return "", err
@@ -55,6 +55,5 @@ func (uc *GetTOTPURIUseCase) GetTOTPURI(ctx context.Context, userID string) (str
 		return "", err
 	}
 
-	issuer := uc.Config.Issuer
 	return uc.TOTPService.BuildURI(secret, issuer, user.Email), nil
 }

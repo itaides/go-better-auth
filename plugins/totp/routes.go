@@ -11,25 +11,27 @@ func Routes(p *TOTPPlugin) []models.Route {
 	uc := p.Api.useCases
 
 	enableHandler := &handlers.EnableHandler{
-		UseCase:      uc.Enable,
+		GlobalConfig: p.globalConfig,
 		PluginConfig: p.pluginConfig,
+		UseCase:      uc.Enable,
 	}
 	disableHandler := &handlers.DisableHandler{
 		UseCase: uc.Disable,
 	}
 	getTOTPURIHandler := &handlers.GetTOTPURIHandler{
-		UseCase: uc.GetTOTPURI,
+		GlobalConfig: p.globalConfig,
+		UseCase:      uc.GetTOTPURI,
 	}
 	verifyTOTPHandler := &handlers.VerifyTOTPHandler{
-		UseCase:      uc.VerifyTOTP,
 		PluginConfig: p.pluginConfig,
+		UseCase:      uc.VerifyTOTP,
 	}
 	generateBackupCodesHandler := &handlers.GenerateBackupCodesHandler{
 		UseCase: uc.GenerateBackupCodes,
 	}
 	verifyBackupCodeHandler := &handlers.VerifyBackupCodeHandler{
-		UseCase:      uc.VerifyBackupCode,
 		PluginConfig: p.pluginConfig,
+		UseCase:      uc.VerifyBackupCode,
 	}
 
 	return []models.Route{

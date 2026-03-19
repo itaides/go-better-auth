@@ -9,7 +9,8 @@ import (
 )
 
 type GetTOTPURIHandler struct {
-	UseCase *usecases.GetTOTPURIUseCase
+	GlobalConfig *models.Config
+	UseCase      *usecases.GetTOTPURIUseCase
 }
 
 func (h *GetTOTPURIHandler) Handler() http.HandlerFunc {
@@ -26,7 +27,7 @@ func (h *GetTOTPURIHandler) Handler() http.HandlerFunc {
 			return
 		}
 
-		totpURI, err := h.UseCase.GetTOTPURI(ctx, userID)
+		totpURI, err := h.UseCase.GetTOTPURI(ctx, userID, h.GlobalConfig.AppName)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusBadRequest, map[string]any{
 				"message": err.Error(),

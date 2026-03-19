@@ -1,11 +1,8 @@
 package handlers
 
 import (
-	"errors"
-	"io"
 	"net/http"
 
-	"github.com/GoBetterAuth/go-better-auth/v2/internal/util"
 	"github.com/GoBetterAuth/go-better-auth/v2/models"
 	"github.com/GoBetterAuth/go-better-auth/v2/plugins/totp/constants"
 	"github.com/GoBetterAuth/go-better-auth/v2/plugins/totp/types"
@@ -13,8 +10,9 @@ import (
 )
 
 type EnableHandler struct {
-	UseCase      *usecases.EnableUseCase
+	GlobalConfig *models.Config
 	PluginConfig *types.TOTPPluginConfig
+	UseCase      *usecases.EnableUseCase
 }
 
 func (h *EnableHandler) Handler() http.HandlerFunc {
@@ -31,23 +29,7 @@ func (h *EnableHandler) Handler() http.HandlerFunc {
 			return
 		}
 
-		issuer := ""
-		if r.Body != nil {
-			var payload types.EnableRequest
-			if err := util.ParseJSON(r, &payload); err != nil {
-				if !errors.Is(err, io.EOF) {
-					reqCtx.SetJSONResponse(http.StatusUnprocessableEntity, map[string]any{
-						"message": "invalid request body",
-					})
-					reqCtx.Handled = true
-					return
-				}
-			} else {
-				issuer = payload.Issuer
-			}
-		}
-
-		result, err := h.UseCase.Enable(ctx, userID, issuer)
+		result, err := h.UseCase.Enable(ctx, userID, h.GlobalConfig.AppName)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusBadRequest, map[string]any{
 				"message": err.Error(),

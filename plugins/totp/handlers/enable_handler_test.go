@@ -59,12 +59,6 @@ func (s *EnableHandlerSuite) TestEnableHandler_Table() {
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
-			name:           "invalid_body",
-			userID:         internaltests.PtrString("u1"),
-			body:           []byte("not-json"),
-			expectedStatus: http.StatusUnprocessableEntity,
-		},
-		{
 			name:   "usecase_already_enabled",
 			userID: internaltests.PtrString(uid),
 			prepare: func(m *enableHandlerFixture) {
@@ -153,20 +147,19 @@ func (s *EnableHandlerSuite) TestEnableHandler_Table() {
 
 func newEnableHandlerFixture() *enableHandlerFixture {
 	return &enableHandlerFixture{
+		config: &types.TOTPPluginConfig{
+			SkipVerificationOnEnable: false,
+			PendingTokenExpiry:       5 * time.Minute,
+			SecureCookie:             false,
+			SameSite:                 "lax",
+		},
+		logger:   &internaltests.MockLogger{},
 		repo:     &totptests.MockTOTPRepo{},
 		userSvc:  &internaltests.MockUserService{},
 		tokenSvc: &internaltests.MockTokenService{},
 		verifSvc: &internaltests.MockVerificationService{},
 		eventBus: &internaltests.MockEventBus{},
 		password: &internaltests.MockPasswordService{},
-		logger:   &internaltests.MockLogger{},
-		config: &types.TOTPPluginConfig{
-			Issuer:                   "MyApp",
-			SkipVerificationOnEnable: false,
-			PendingTokenExpiry:       5 * time.Minute,
-			SecureCookie:             false,
-			SameSite:                 "lax",
-		},
 	}
 }
 
@@ -196,11 +189,11 @@ func (m *enableHandlerFixture) buildHandler() *EnableHandler {
 
 	if m.config.SkipVerificationOnEnable {
 		uc := usecases.NewEnableUseCase(m.config, m.logger, m.eventBus, m.userSvc, m.tokenSvc, nil, totpSvc, backupSvc, m.repo)
-		return &EnableHandler{UseCase: uc, PluginConfig: m.config}
+		return &EnableHandler{GlobalConfig: &models.Config{AppName: "MyApp"}, PluginConfig: m.config, UseCase: uc}
 	}
 
 	uc := usecases.NewEnableUseCase(m.config, m.logger, m.eventBus, m.userSvc, m.tokenSvc, m.verifSvc, totpSvc, backupSvc, m.repo)
-	return &EnableHandler{UseCase: uc, PluginConfig: m.config}
+	return &EnableHandler{GlobalConfig: &models.Config{AppName: "MyApp"}, PluginConfig: m.config, UseCase: uc}
 }
 
 func (m *enableHandlerFixture) resetRepoExpectations() {

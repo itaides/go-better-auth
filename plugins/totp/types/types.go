@@ -10,7 +10,6 @@ import (
 
 type TOTPPluginConfig struct {
 	Enabled                       bool          `json:"enabled" toml:"enabled"`
-	Issuer                        string        `json:"issuer" toml:"issuer"`
 	SkipVerificationOnEnable      bool          `json:"skip_verification_on_enable" toml:"skip_verification_on_enable"`
 	BackupCodeCount               int           `json:"backup_code_count" toml:"backup_code_count"`
 	TrustedDeviceDuration         time.Duration `json:"trusted_device_duration" toml:"trusted_device_duration"`
@@ -53,9 +52,6 @@ func ParseSameSite(s string) http.SameSite {
 }
 
 // Request payloads
-type EnableRequest struct {
-	Issuer string `json:"issuer,omitempty"`
-}
 
 type VerifyTOTPRequest struct {
 	Code        string `json:"code"`

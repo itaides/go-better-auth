@@ -12,8 +12,8 @@ import (
 )
 
 type VerifyBackupCodeHandler struct {
-	UseCase      *usecases.VerifyBackupCodeUseCase
 	PluginConfig *types.TOTPPluginConfig
+	UseCase      *usecases.VerifyBackupCodeUseCase
 }
 
 func (h *VerifyBackupCodeHandler) Handler() http.HandlerFunc {

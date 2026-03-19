@@ -36,7 +36,6 @@ func newTestFixture() *testFixture {
 			Session: models.SessionConfig{ExpiresIn: 24 * time.Hour},
 		},
 		config: &types.TOTPPluginConfig{
-			Issuer:                "MyApp",
 			PendingTokenExpiry:    5 * time.Minute,
 			TrustedDeviceDuration: 24 * time.Hour,
 		},
