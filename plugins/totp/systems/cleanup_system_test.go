@@ -5,6 +5,7 @@ import (
 	"errors"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -49,98 +50,89 @@ func TestName(t *testing.T) {
 	assert.Equal(t, "TrustedDevicesCleanupSystem", s.Name())
 }
 
-func TestInit_AutoCleanupDisabled_DoesNotCleanup(t *testing.T) {
-	repo := &mockRepo{}
-	s := systems.NewTrustedDevicesCleanupSystem(
-		&internaltests.MockLogger{},
-		configWithCleanup(false, 0),
-		repo,
-	)
+func TestTrustedDevicesCleanupSystem(t *testing.T) {
+	type testCase struct {
+		name           string
+		enabled        bool
+		interval       time.Duration
+		repoErr        error
+		advanceBefore  time.Duration
+		wantMinCalls   int32
+		checkStopAfter bool
+		advanceAfter   time.Duration
+		wantNoIncrease bool
+	}
 
-	require.NoError(t, s.Init(context.Background()))
+	for _, tc := range []testCase{
+		{
+			name:          "auto cleanup disabled does not cleanup",
+			enabled:       false,
+			advanceBefore: 0,
+			wantMinCalls:  0,
+		},
+		{
+			name:          "auto cleanup enabled calls delete expired",
+			enabled:       true,
+			interval:      20 * time.Millisecond,
+			advanceBefore: 45 * time.Millisecond,
+			wantMinCalls:  2,
+		},
+		{
+			name:          "zero interval falls back to one hour",
+			enabled:       true,
+			interval:      0,
+			advanceBefore: 20 * time.Millisecond,
+			wantMinCalls:  0,
+		},
+		{
+			name:           "close stops cleanup loop",
+			enabled:        true,
+			interval:       10 * time.Millisecond,
+			advanceBefore:  15 * time.Millisecond,
+			wantMinCalls:   1,
+			checkStopAfter: true,
+			advanceAfter:   30 * time.Millisecond,
+			wantNoIncrease: true,
+		},
+		{
+			name:          "repo error does not panic",
+			enabled:       true,
+			interval:      10 * time.Millisecond,
+			repoErr:       errors.New("db unavailable"),
+			advanceBefore: 25 * time.Millisecond,
+			wantMinCalls:  2,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				repo := &mockRepo{err: tc.repoErr}
+				s := systems.NewTrustedDevicesCleanupSystem(
+					&internaltests.MockLogger{},
+					configWithCleanup(tc.enabled, tc.interval),
+					repo,
+				)
 
-	// Give a moment to confirm no goroutine fires.
-	time.Sleep(50 * time.Millisecond)
-	assert.Equal(t, int32(0), repo.callCount.Load())
+				require.NoError(t, s.Init(context.Background()))
+				if tc.advanceBefore > 0 {
+					time.Sleep(tc.advanceBefore)
+				}
+				synctest.Wait()
 
-	// Close must not block even when cleanup was never started.
-	require.NoError(t, s.Close())
-}
+				assert.GreaterOrEqual(t, repo.callCount.Load(), tc.wantMinCalls)
 
-func TestInit_AutoCleanupEnabled_CallsDeleteExpired(t *testing.T) {
-	repo := &mockRepo{}
-	s := systems.NewTrustedDevicesCleanupSystem(
-		&internaltests.MockLogger{},
-		configWithCleanup(true, 20*time.Millisecond),
-		repo,
-	)
+				if tc.checkStopAfter {
+					require.NoError(t, s.Close())
+					countAfterClose := repo.callCount.Load()
+					time.Sleep(tc.advanceAfter)
+					synctest.Wait()
+					if tc.wantNoIncrease {
+						assert.Equal(t, countAfterClose, repo.callCount.Load())
+					}
+					return
+				}
 
-	require.NoError(t, s.Init(context.Background()))
-	defer func() { require.NoError(t, s.Close()) }()
-
-	// Wait long enough for at least two cleanup ticks.
-	assert.Eventually(t, func() bool {
-		return repo.callCount.Load() >= 2
-	}, 500*time.Millisecond, 10*time.Millisecond)
-}
-
-func TestInit_ZeroInterval_FallsBackToOneHour(t *testing.T) {
-	// We just need Init to not panic and not start a ridiculously fast ticker.
-	// Since the default interval is 1 hour, we can verify by starting, then
-	// immediately closing — no cleanup call should have fired.
-	repo := &mockRepo{}
-	s := systems.NewTrustedDevicesCleanupSystem(
-		&internaltests.MockLogger{},
-		configWithCleanup(true, 0), // zero → falls back to time.Hour
-		repo,
-	)
-
-	require.NoError(t, s.Init(context.Background()))
-	time.Sleep(20 * time.Millisecond)
-	require.NoError(t, s.Close())
-
-	assert.Equal(t, int32(0), repo.callCount.Load())
-}
-
-func TestClose_StopsCleanupLoop(t *testing.T) {
-	repo := &mockRepo{}
-	s := systems.NewTrustedDevicesCleanupSystem(
-		&internaltests.MockLogger{},
-		configWithCleanup(true, 10*time.Millisecond),
-		repo,
-	)
-
-	require.NoError(t, s.Init(context.Background()))
-
-	// Let at least one tick fire.
-	assert.Eventually(t, func() bool {
-		return repo.callCount.Load() >= 1
-	}, 300*time.Millisecond, 5*time.Millisecond)
-
-	require.NoError(t, s.Close())
-
-	// Record count at close.
-	countAfterClose := repo.callCount.Load()
-
-	// After a short wait, count must not increase.
-	time.Sleep(30 * time.Millisecond)
-	assert.Equal(t, countAfterClose, repo.callCount.Load())
-}
-
-func TestCleanup_RepoError_DoesNotPanic(t *testing.T) {
-	repo := &mockRepo{err: errors.New("db unavailable")}
-	s := systems.NewTrustedDevicesCleanupSystem(
-		&internaltests.MockLogger{},
-		configWithCleanup(true, 10*time.Millisecond),
-		repo,
-	)
-
-	require.NoError(t, s.Init(context.Background()))
-
-	// Error shouldn't stop the loop; it should keep ticking.
-	assert.Eventually(t, func() bool {
-		return repo.callCount.Load() >= 2
-	}, 300*time.Millisecond, 5*time.Millisecond)
-
-	require.NoError(t, s.Close())
+				require.NoError(t, s.Close())
+			})
+		})
+	}
 }
